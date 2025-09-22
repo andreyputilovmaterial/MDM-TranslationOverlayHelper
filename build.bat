@@ -25,8 +25,10 @@ ECHO run_universal.main() >> dist/mdmoverlayhelper_bundle.py
 ECHO # print('out of mdmoverlayhelper_bundle') >> dist/mdmoverlayhelper_bundle.py
 
 PUSHD dist
-COPY ..\run.bat .\run_overlayhelper.bat
-powershell -Command "(gc 'run_overlayhelper.bat' -encoding 'Default') -replace '(dist[/\\])?mdmoverlayhelper_bundle.py', 'mdmoverlayhelper_bundle.py' | Out-File -encoding 'Default' 'run_overlayhelper.bat'"
+COPY ..\run_make_excel.bat .\run_overlayhelper_excel.bat
+powershell -Command "(gc 'run_overlayhelper_excel.bat' -encoding 'Default') -replace '(dist[/\\])?mdmoverlayhelper_bundle.py', 'mdmoverlayhelper_bundle.py' | Out-File -encoding 'Default' 'run_overlayhelper_excel.bat'"
+COPY ..\run_produce_scripts.bat .\run_overlayhelper_scripts.bat
+powershell -Command "(gc 'run_overlayhelper_scripts.bat' -encoding 'Default') -replace '(dist[/\\])?mdmoverlayhelper_bundle.py', 'mdmoverlayhelper_bundle.py' | Out-File -encoding 'Default' 'run_overlayhelper_scripts.bat'"
 POPD
 
 
