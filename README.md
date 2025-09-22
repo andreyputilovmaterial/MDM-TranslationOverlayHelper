@@ -1,11 +1,11 @@
 # MDM-TranslationOverlayHelper
-A tool that creates an Excel with fields and labels from MDD, including translations. This is super handy if the project workflow involves mnual translation updates. 99% of the time you won't need it - we send files to LI, and they are doing their job fine. But sometimes we need to work on a project and work on translations withouit the help from LI side. Then, having such Excel file generated make everybody's life much easier - everyone who works on translations, checks it, who needs to review... Or who need to update it in MDD (I mean us, IPS).
+A tool that creates an Excel with fields and labels from MDD, including translations. This is super handy if the project workflow involves manual translation updates. 99% of the time you don't need it - we send files to LI, and they are doing their job fine. But sometimes we need to work on a project and work on translations without any help from LI side. Then, having such Excel file generated make everybody's life much easier - everyone who works on translations, checks it, who needs to review... Or who need to update it in MDD (I mean us, IPS).
 
 Then, if translations were updated in the Excel, this tool can generate scripts to update your MDD back.
 
 Enjoy!
 
-## ow to use:
+## How to use:
 
 Download files from the latest Release page:
 [Releases](../../releases/latest)
