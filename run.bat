@@ -64,7 +64,7 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b 
 IF %CONFIG_PRODUCE_HTML_MDD% (
     ECHO -
     ECHO 1.1. generate html
-    python dist/mdmoverlayhelper_bundle.py --program report --inpfile "%MDD_FILE_SCHEME%"
+    python dist/mdmoverlayhelper_bundle.py --program report_excel --inpfile "%MDD_FILE_SCHEME%"
     if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 )
 

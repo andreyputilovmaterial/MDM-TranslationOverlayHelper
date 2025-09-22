@@ -11,15 +11,18 @@ import traceback
 if __name__ == '__main__':
     # run as a program
     from lib.mdmreadpy import read_mdd
-    from lib.mdmreadpy.lib.mdmreportpy import report_create
+    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmexcelreportpy import report_create as report_excel_create
 elif '.' in __name__:
     # package
     from .lib.mdmreadpy import read_mdd
-    from .lib.mdmreadpy.lib.mdmreportpy import report_create
+    from .lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from .lib.mdmexcelreportpy import report_create as report_excel_create
 else:
     # included with no parent package
     from lib.mdmreadpy import read_mdd
-    from lib.mdmreadpy.lib.mdmreportpy import report_create
+    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
+    from lib.mdmexcelreportpy import report_create as report_excel_create
 
 
 
@@ -30,7 +33,13 @@ def call_read_mdd_program():
     return read_mdd.entry_point({'arglist_strict':False})
 
 def call_report_program():
-    return report_create.entry_point({'arglist_strict':False})
+    raise Exception('deprecated: --program report is deprecated here; please use --program report_html or --program report_excel instead')
+
+def call_report_html_program():
+    return report_html_create.entry_point({'arglist_strict':False})
+
+def call_report_excel_program():
+    return report_excel_create.entry_point({'arglist_strict':False})
 
 
 
@@ -39,6 +48,8 @@ def call_report_program():
 run_programs = {
     'read_mdd': call_read_mdd_program,
     'report': call_report_program,
+    'report_html': call_report_html_program,
+    'report_excel': call_report_excel_program,
 }
 
 
