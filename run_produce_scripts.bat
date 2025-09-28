@@ -7,6 +7,11 @@ SET "MDD_FILE=.\tests\working\current\P25xSL0006.mdd"
 
 
 
+@REM :: insert your files here
+SET "OUT_SCRIPT_FILE=.\tests\working\current\SE_OverlaysUpdate.mrs"
+
+
+
 @REM :: the path where outout files are saved
 @REM :: "." means the same directory as this script
 @REM :: empty path ("") means the same directory as your MDD
@@ -51,22 +56,16 @@ IF "%OUT_PATH%"=="" (
     SET "OUT_PATH_AND_NAME=%OUT_PATH%\%MDD_FILE_LAST_NAME%"
 )
 SET "MDD_FILE_SCHEME=%MDD_FILE%.json"
+SET "MAP_FILE=%MDD_FILE%.xlsx"
 
 
 
 ECHO -
-ECHO 1. read MDD
+ECHO 3. generate scripts
 ECHO read from: %MDD_FILE%
-ECHO write to: .json
-python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features translations --config-section fields --config-contexts Analysis,Question
+ECHO write to: "%OUT_SCRIPT_FILE%"
+python dist/mdmoverlayhelper_bundle.py --program generate_overlays_script --inpfile "%MAP_FILE%" --outfile "%OUT_SCRIPT_FILE%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
-
-IF %CONFIG_PRODUCE_HTML_MDD% (
-    ECHO -
-    ECHO 1.1. generate html
-    python dist/mdmoverlayhelper_bundle.py --program report_excel --inpfile "%MDD_FILE_SCHEME%"
-    if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
-)
 
 
 

@@ -30,6 +30,15 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["--inpfile","tests/working/current/report.diff.PrepDataDMS_-20250903171400-20250908131241-.txt.json","--program","report_excel"]
+        },
+        {
+            "name": "Produce scrips",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.xlsx","--outfile","tests/working/current/P25xSL0006_SE_OverlaysUpdate.mrs","--program","generate_overlays_script"]
         }
     ]
 }
