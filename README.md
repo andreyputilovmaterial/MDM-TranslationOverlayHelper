@@ -22,8 +22,5 @@ where xxx is a missing package.
 
 The tool is distributed as a .py file, but you can't edit it. If you are not happy with the results, find the source codes (they are open) and re-generate the compiled bundle. Do NOT edit, as this bundle is a tricky file - python is reading and loading parts of self in runtime, and start and end positions of these parts are hardcoded. If you edit anything, block positions will be incorrect, and running the file will lead to undefined behaviour.
 
-## Current state of the project
-This is not ready yet
-
 ## Frequently asked questions
 TBD
