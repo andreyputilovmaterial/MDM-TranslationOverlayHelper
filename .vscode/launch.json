@@ -11,7 +11,7 @@
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.json","--program","report_excel"]
+            "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.json","--program","report_excel","--flags", "mdd_translationoverlays_excel"]
         },
         {
             "name": "Excel Export - MDD diff",
