@@ -58,7 +58,7 @@ ECHO -
 ECHO 1. read MDD
 ECHO read from: %MDD_FILE%
 ECHO write to: .json
-python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features translations --config-section fields --config-contexts Analysis,Question
+python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features translations --config-section shared_lists,fields,pages --config-contexts Question --config-sharedlists-listcats stepover
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b %errorlevel% )
 
 IF %CONFIG_PRODUCE_HTML_MDD% (

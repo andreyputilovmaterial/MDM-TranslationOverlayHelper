@@ -5,13 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Excel Export",
+            "name": "Excel Export - normal MDD",
             "type": "python",
             "request": "launch",
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.json","--program","report_excel"]
+        },
+        {
+            "name": "Excel Export - MDD diff",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--inpfile","tests/working/current/report.diff.p2500887_auto_-20250808-20250812_temp-.mdd.json","--program","report_excel"]
+        },
+        {
+            "name": "Excel Export - dms diff",
+            "type": "python",
+            "request": "launch",
+            "program": "src/run_universal.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": ["--inpfile","tests/working/current/report.diff.PrepDataDMS_-20250903171400-20250908131241-.txt.json","--program","report_excel"]
         }
     ]
 }
