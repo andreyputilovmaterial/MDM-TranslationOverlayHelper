@@ -29,17 +29,18 @@ def escape(s):
 
 
 
-
-def produce_sharedlists_item_address_fn(item_name):
+# changes SL_GlobaslBrands.Categories[Amazon] (address string found in Excel) into mdm.Types["SL_GlobalBrands"].Elements["Amazon"] (address string that should be used in syntax)
+def produce_sharedlists_item_syntax(item_name):
     item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
     if not item_name_parse_matches:
         raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
     return 'objMDM{iterative_fields}{add_subelement}'.format(
         iterative_fields = ''.join([ '.{node}["{name}"]'.format(node='Types' if i==0 else 'Elements',name=re.sub(r'^\s*?(\w+)\s*?(?:\[\s*?\.\.\s*?\])?\s*?$',lambda m: m[1],n,flags=re.I)) for i,n in enumerate('{match}'.format(match=item_name_parse_matches[1]).split('.')) ]),
-        add_subelement = re.sub(r'^\s*?(\.(?:Categories|Elements)\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin}"{body}"{end}'.format(begin=m[1],body=m[2],end=m[3]),item_name_parse_matches[2],flags=re.I),
+        add_subelement = re.sub(r'^\s*?(\.)((?:Categories|Elements))(\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin_prefix}{begin_field}{begin_suffix}"{body}"{end}'.format(begin_prefix=m[1],begin_field='Elements',begin_suffix=m[3],body=m[4],end=m[5]),item_name_parse_matches[2],flags=re.I),
     )
 
-def produce_fields_item_address_fn(item_name):
+# changes Gender.Categories[Male] (address string found in Excel) into mdm.Fields["Gender"].Elements["Male"] (address string that should be used in syntax)
+def produce_fields_item_syntax(item_name):
     item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
     if not item_name_parse_matches:
         raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
@@ -48,7 +49,8 @@ def produce_fields_item_address_fn(item_name):
         add_subelement = re.sub(r'^\s*?(\.(?:Categories|Elements)\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin}"{body}"{end}'.format(begin=m[1],body=m[2],end=m[3]),item_name_parse_matches[2],flags=re.I),
     )
 
-def produce_pages_item_address_fn(item_name):
+# changes PAGE_AgeRange.DV_AgeGender (address string found in Excel) into mdm.Pages["PAGE_AgeGender"].Item["DV_AgeGender"] (address string that should be used in syntax)
+def produce_pages_item_syntax(item_name):
     item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
     if not item_name_parse_matches:
         raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
@@ -60,13 +62,13 @@ def produce_pages_item_address_fn(item_name):
 
 
 
-def produce_variable_syntax(item_name, row, langs, produce_item_address_fn):
+def produce_variable_syntax(item_name, row, langs, produce_item_syntax):
     syntax_add = ''
 
     if re.match(r'^\s*?$',item_name,flags=re.I):
         return ''
     
-    item_path = produce_item_address_fn(item_name)
+    item_path = produce_item_syntax(item_name)
 
     # if 'update' not in df.columns:
     #     raise Exception('Error: "update" column not found')
@@ -135,7 +137,7 @@ def produce_scripts(map,config={}):
                 
                 if 'update' not in df.columns:
                     raise Exception('Error: "update" column not found')
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_sharedlists_item_address_fn)
+                syntax_add = produce_variable_syntax(item_name, row, langs, produce_sharedlists_item_syntax)
 
                 resulting_syntax = resulting_syntax + syntax_add
                 
@@ -152,7 +154,7 @@ def produce_scripts(map,config={}):
 
             try:
                 
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_fields_item_address_fn)
+                syntax_add = produce_variable_syntax(item_name, row, langs, produce_fields_item_syntax)
 
                 resulting_syntax = resulting_syntax + syntax_add
                 
@@ -169,7 +171,7 @@ def produce_scripts(map,config={}):
 
             try:
                 
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_pages_item_address_fn)
+                syntax_add = produce_variable_syntax(item_name, row, langs, produce_pages_item_syntax)
 
                 resulting_syntax = resulting_syntax + syntax_add
                 
