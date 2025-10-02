@@ -57,7 +57,7 @@ def entry_point(config={}):
         )
         parser.add_argument(
             '--flags',
-            help='Possible comma-separate flags that change program behavior: print_not_updated_lines_commented_out to include all rows inm export but keep those where "update" column is not punched commented out (as opposed to those lines being cmopletely skipped by default)',
+            help='Possible comma-separate flags that change program behavior: `print_not_updated_lines_commented_out` to include all rows inm export but keep those where "update" column is not punched commented out (as opposed to those lines being cmopletely skipped by default), `dont_write_translators_comments_to_mdd` to not include code that writes comment column to MDD',
             type=str,
             required=False,
         )
@@ -79,13 +79,17 @@ def entry_point(config={}):
             raise FileNotFoundError('File not found: {fname}'.format(fname=input_excel_filename))
         
         config = {
-            'flags': {},
+            'flags': {
+                'write_translators_comments_to_mdd': True, # that would be the default, unless "dont_write_translators_comments_to_mdd" flag is set
+            },
         }
 
         if args.flags:
             for flag in args.flags.split(','):
-                if flag.lower().strip()=='print_not_updated_lines_commented_out':
+                if flag.lower().strip()=='print_not_updated_lines_commented_out'.lower().strip():
                     config['flags']['print_not_updated_lines_commented_out'] = True
+                elif flag.lower().strip()=='dont_write_translators_comments_to_mdd'.lower().strip():
+                    config['flags']['write_translators_comments_to_mdd'] = False
                 else:
                     raise Exception('Error: {script_name}: Unrecognized flag: {flag}'.format(script_name=script_name,flag=flag))
 

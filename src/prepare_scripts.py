@@ -17,7 +17,18 @@ else:
 
 
 
-def escape(s):
+
+MDD_TRANSLATORSCOMMENT_PROPERTY_NAME = 'SEToolOverlayHelper_TranslatorsComment'
+
+
+
+
+
+
+
+
+
+def sanitize_text(s):
     s = '{s}'.format(s=s) # anyway we are writing it as text
     s = s.replace("\r", "\n")
     # Remove other invalid control chars
@@ -66,56 +77,89 @@ def produce_pages_item_syntax(item_name):
 def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
     syntax_piece_add = ''
 
+    # if that's a root item (ampy string as an address), we don't have anything to update here, just skip
     if re.match(r'^\s*?$',item_name,flags=re.I):
         return ''
     
+    # ok, prepare local variables with all the translated_texts - texts, inserts, translator's comment, helper variables that indicate if something was updated, and if we want it to get updated in MDD...
     item_path = produce_item_syntax(item_name)
 
-    update_column_contents = row['update']
-    variable_needs_updating = False if not update_column_contents or len(update_column_contents)==0 else ( True if re.match(r'^\s*?(?:y|yes|x|1|affirmative|true)\s*?$',update_column_contents,flags=re.I) else ( False if re.match(r'^\s*?(?:n|no|0|false|none)\s*?$',update_column_contents,flags=re.I) else ( not not update_column_contents ) ) )
-    
-    if not variable_needs_updating:
-        if 'flags' in config and 'print_not_updated_lines_commented_out' in config['flags'] and not not config['flags']['print_not_updated_lines_commented_out']:
-            pass
-        else:
-            return ''
+    update_column_flag = row['update']
+    variable_needs_updating = False if not update_column_flag or len(update_column_flag)==0 else ( True if re.match(r'^\s*?(?:y|yes|x|1|affirmative|true)\s*?$',update_column_flag,flags=re.I) else ( False if re.match(r'^\s*?(?:n|no|0|false|none)\s*?$',update_column_flag,flags=re.I) else ( not not update_column_flag ) ) )
 
-    data = {}
+    translators_comment = row['comment']
+    has_translators_comment = not not translators_comment and len(translators_comment.strip())>0
+    
+    translated_texts = {}
     is_overlay_empty = {}
+    need_write_translators_comments_to_mdd = False
+    if 'flags' in config and 'write_translators_comments_to_mdd' in config['flags'] and not not config['flags']['write_translators_comments_to_mdd']:
+        need_write_translators_comments_to_mdd = True
     
     for lang in langs:
         col = 'langcode-{code}'.format(code=lang)
-        data[lang] = row[col]
-        if not not data[lang] or len(data[lang])>0:
+        translated_texts[lang] = row[col]
+        if not not translated_texts[lang] or len(translated_texts[lang])>0:
             is_overlay_empty[lang] = False
         else:
             is_overlay_empty[lang] = True
     
+    # ok, finally, should we skip?
+    should_skip = False
+    if not variable_needs_updating:
+        if 'flags' in config and 'print_not_updated_lines_commented_out' in config['flags'] and not not config['flags']['print_not_updated_lines_commented_out']:
+            should_skip = False
+        else:
+            if need_write_translators_comments_to_mdd and has_translators_comment:
+                should_skip = False
+            else:
+                should_skip= True
+    
+    if should_skip:
+        return ''
+
+    # prepare text inserts for syntax
     substitutes_base = {
         'linecommentmarker_if_var_needs_updating': '\'' if not variable_needs_updating else '',
         'item_name': item_name,
         'item_path': item_path,
     }
 
+    # 1. first line - a comment with variable name
     syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' variable: {item_name}\n'.format(**substitutes_base)
+    # 2. add comments listing all actual translations provided in Excel
     for lang in langs:
         substitutes = {
             **substitutes_base,
             'langcode': lang,
-            'text': escape(data[lang]),
+            'text': sanitize_text(translated_texts[lang]),
             'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
         }
         syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' {langcode} label: {text}\n'.format(**substitutes)
+    # 3. add a line that writes translator's comment to MDD
+    if has_translators_comment:
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_comments_need_to_be_written_to_mdd}{item_path}.Properties.Item["{comment_prop_name}"] = "{text}"\n'.format(
+            **{
+                **substitutes_base,
+                'linecommentmarker_if_var_needs_updating': '\'' if not variable_needs_updating and not need_write_translators_comments_to_mdd else '',
+                'linecommentmarker_if_comments_need_to_be_written_to_mdd': '' if need_write_translators_comments_to_mdd else '\'',
+                'comment_prop_name': MDD_TRANSLATORSCOMMENT_PROPERTY_NAME,
+                'text': sanitize_text(translators_comment),
+            }
+        )
+    # 4. now add syntax to actually write translated texts to MDD
     for lang in langs:
         substitutes = {
             **substitutes_base,
             'langcode': lang,
-            'text': escape(data[lang]),
+            'text': sanitize_text(translated_texts[lang]),
             'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
         }
         syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
+    # 5. done, add 2 more trailing line breaks
     syntax_piece_add = syntax_piece_add + '\n\n'
 
+    # and we finished, return the resulting syntax back
     return syntax_piece_add
 
 

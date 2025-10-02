@@ -11,7 +11,7 @@
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.json","--program","report_excel","--flags", "mdd_translationoverlays_excel"]
+            "args": ["--inpfile","tests/working/Data/P25xSL0006.mdd.json","--program","report_excel","--flags", "mdd_translationoverlays_excel"]
         },
         {
             "name": "Excel Export - MDD diff",
@@ -20,7 +20,7 @@
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--inpfile","tests/working/current/report.diff.p2500887_auto_-20250808-20250812_temp-.mdd.json","--program","report_excel"]
+            "args": ["--inpfile","tests/working/Data/report.diff.p2500887_auto_-20250808-20250812_temp-.mdd.json","--program","report_excel"]
         },
         {
             "name": "Excel Export - dms diff",
@@ -29,7 +29,7 @@
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--inpfile","tests/working/current/report.diff.PrepDataDMS_-20250903171400-20250908131241-.txt.json","--program","report_excel"]
+            "args": ["--inpfile","tests/working/Data/report.diff.PrepDataDMS_-20250903171400-20250908131241-.txt.json","--program","report_excel"]
         },
         {
             "name": "Produce scrips",
@@ -38,7 +38,7 @@
             "program": "src/run_universal.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--inpfile","tests/working/current/P25xSL0006.mdd.xlsx","--outfile","tests/working/current/P25xSL0006_SE_OverlaysUpdate.mrs","--program","generate_overlays_script"]
+            "args": ["--inpfile","tests/working/Data/P25xSL0006.mdd.xlsx","--outfile","tests/working/Data/P25xSL0006_SE_OverlaysUpdate.mrs","--program","generate_overlays_script"]
         }
     ]
 }

@@ -31,6 +31,11 @@ SET "CONFIG_CLEAN_TEMP_MIDDLE_FILES=1==1"
 SET "CONFIG_PRINT_NOT_UPDATED_LINES_COMMENTED_OUT=1==0"
 
 
+@REM :: set to "1==1" if don't need additional code that writes comments from Excel to MDD (in custom properties); that's the defaults, it writes by default, so that we have this data saved when we reload excel
+@REM :: or, set to "1==0" to skip and to have your MDD clean from such properties
+SET "DONT_WRITE_TRANSLATORS_COMMENTS_TO_MDD=1==0"
+
+
 
 
 
@@ -53,6 +58,13 @@ IF %CONFIG_PRINT_NOT_UPDATED_LINES_COMMENTED_OUT% (
         SET "CONFIG_FLAGS=--flags print_not_updated_lines_commented_out"
     ) ELSE (
         SET "CONFIG_FLAGS=%CONFIG_FLAGS%,print_not_updated_lines_commented_out"
+    )
+)
+IF %DONT_WRITE_TRANSLATORS_COMMENTS_TO_MDD% (
+    IF "%CONFIG_FLAGS%"=="" (
+        SET "CONFIG_FLAGS=--flags dont_write_translators_comments_to_mdd"
+    ) ELSE (
+        SET "CONFIG_FLAGS=%CONFIG_FLAGS%,dont_write_translators_comments_to_mdd"
     )
 )
 
