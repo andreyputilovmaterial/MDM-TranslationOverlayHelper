@@ -41,7 +41,7 @@ def entry_point(config={}):
 
         parser = argparse.ArgumentParser(
             description="Produce a ready mrs script to write updates to MDD",
-            prog='mdmtoolsap --program generate_overlays_script'
+            prog='mdmtoolsap --program generate_overlays_script',
         )
         parser.add_argument(
             '--inpfile',
@@ -53,7 +53,13 @@ def entry_point(config={}):
             '--outfile',
             help='Desird name for the resulting script',
             type=str,
-            required=True
+            required=True,
+        )
+        parser.add_argument(
+            '--flags',
+            help='Possible comma-separate flags that change program behavior: print_not_updated_lines_commented_out to include all rows inm export but keep those where "update" column is not punched commented out (as opposed to those lines being cmopletely skipped by default)',
+            type=str,
+            required=False,
         )
         args = None
         args_rest = None
@@ -72,7 +78,16 @@ def entry_point(config={}):
         if not(Path(input_excel_filename).is_file()):
             raise FileNotFoundError('File not found: {fname}'.format(fname=input_excel_filename))
         
-        config = {}
+        config = {
+            'flags': {},
+        }
+
+        if args.flags:
+            for flag in args.flags.split(','):
+                if flag.lower().strip()=='print_not_updated_lines_commented_out':
+                    config['flags']['print_not_updated_lines_commented_out'] = True
+                else:
+                    raise Exception('Error: {script_name}: Unrecognized flag: {flag}'.format(script_name=script_name,flag=flag))
 
         map = Map(input_excel_filename,config)
         result = produce_scripts(map,config)

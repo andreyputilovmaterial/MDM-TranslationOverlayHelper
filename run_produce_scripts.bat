@@ -3,23 +3,12 @@ SETLOCAL enabledelayedexpansion
 
 
 @REM :: insert your files here
-SET "MDD_FILE=.\tests\working\current\P25xSL0006.mdd"
+SET "MDD_FILE=Data\P25xSL0006.mdd"
 
 
 
 @REM :: insert your files here
-SET "OUT_SCRIPT_FILE=.\tests\working\current\SE_OverlaysUpdate.mrs"
-
-
-
-@REM :: the path where outout files are saved
-@REM :: "." means the same directory as this script
-@REM :: empty path ("") means the same directory as your MDD
-@REM :: temporary files are still created at the location of your MDD (it all is configured within this BAT file - adjust if you need)
-@REM :: but temp files are deleted at the end of script (if you have CONFIG_CLEAN_TEMP_MIDDLE_FILES==1==1)
-
-REM SET "OUT_PATH="
-SET "OUT_PATH=."
+SET "OUT_SCRIPT_FILE=Data\run_OverlaysUpdate.mrs"
 
 
 
@@ -37,6 +26,11 @@ SET "CONFIG_PRODUCE_HTML_MDD=1==1"
 SET "CONFIG_CLEAN_TEMP_MIDDLE_FILES=1==1"
 
 
+@REM :: set to "1==1" if yont code generated for everyvariable, even with "update" column not punched (these lines will be commented out but still added to script)
+@REM :: or, set to "1==0" to only include variables where "update" column was punched, that's the default setting
+SET "CONFIG_PRINT_NOT_UPDATED_LINES_COMMENTED_OUT=1==0"
+
+
 
 
 
@@ -50,21 +44,24 @@ SET "CONFIG_CLEAN_TEMP_MIDDLE_FILES=1==1"
 
 REM :: file names with file schemes in json
 FOR %%F in ("%MDD_FILE%") DO SET "MDD_FILE_LAST_NAME=%%~nxF"
-IF "%OUT_PATH%"=="" (
-    SET "OUT_PATH_AND_NAME=%MDD_FILE%"
-) ELSE (
-    SET "OUT_PATH_AND_NAME=%OUT_PATH%\%MDD_FILE_LAST_NAME%"
-)
 SET "MDD_FILE_SCHEME=%MDD_FILE%.json"
 SET "MAP_FILE=%MDD_FILE%.xlsx"
 
+SET "CONFIG_FLAGS="
+IF %CONFIG_PRINT_NOT_UPDATED_LINES_COMMENTED_OUT% (
+    IF "%CONFIG_FLAGS%"=="" (
+        SET "CONFIG_FLAGS=--flags print_not_updated_lines_commented_out"
+    ) ELSE (
+        SET "CONFIG_FLAGS=%CONFIG_FLAGS%,print_not_updated_lines_commented_out"
+    )
+)
 
 
 ECHO -
 ECHO 3. generate scripts
 ECHO read from: %MDD_FILE%
 ECHO write to: "%OUT_SCRIPT_FILE%"
-python dist/mdmoverlayhelper_bundle.py --program generate_overlays_script --inpfile "%MAP_FILE%" --outfile "%OUT_SCRIPT_FILE%"
+python mdmoverlayhelper_bundle.py --program generate_overlays_script --inpfile "%MAP_FILE%" --outfile "%OUT_SCRIPT_FILE%" %CONFIG_FLAGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 

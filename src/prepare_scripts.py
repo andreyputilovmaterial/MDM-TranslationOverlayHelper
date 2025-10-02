@@ -62,58 +62,61 @@ def produce_pages_item_syntax(item_name):
 
 
 
-def produce_variable_syntax(item_name, row, langs, produce_item_syntax):
-    syntax_add = ''
+# generates a block of lines with syntax for each variable, that start with a comment with variable name
+def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
+    syntax_piece_add = ''
 
     if re.match(r'^\s*?$',item_name,flags=re.I):
         return ''
     
     item_path = produce_item_syntax(item_name)
 
-    # if 'update' not in df.columns:
-    #     raise Exception('Error: "update" column not found')
-
     update_column_contents = row['update']
     variable_needs_updating = False if not update_column_contents or len(update_column_contents)==0 else ( True if re.match(r'^\s*?(?:y|yes|x|1|affirmative|true)\s*?$',update_column_contents,flags=re.I) else ( False if re.match(r'^\s*?(?:n|no|0|false|none)\s*?$',update_column_contents,flags=re.I) else ( not not update_column_contents ) ) )
-    suppressmarker_variable = not variable_needs_updating
+    
+    if not variable_needs_updating:
+        if 'flags' in config and 'print_not_updated_lines_commented_out' in config['flags'] and not not config['flags']['print_not_updated_lines_commented_out']:
+            pass
+        else:
+            return ''
 
     data = {}
-    suppressmarker_perlang = {}
+    is_overlay_empty = {}
     
     for lang in langs:
         col = 'langcode-{code}'.format(code=lang)
         data[lang] = row[col]
         if not not data[lang] or len(data[lang])>0:
-            suppressmarker_perlang[lang] = False
+            is_overlay_empty[lang] = False
         else:
-            suppressmarker_perlang[lang] = True
+            is_overlay_empty[lang] = True
     
     substitutes_base = {
-        'suppress_marker_if_needs_updating': '\'' if suppressmarker_variable else '',
+        'linecommentmarker_if_var_needs_updating': '\'' if not variable_needs_updating else '',
         'item_name': item_name,
         'item_path': item_path,
     }
 
-    syntax_add = syntax_add + '{suppress_marker_if_needs_updating}\' variable: {item_name}\n'.format(**substitutes_base)
+    syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' variable: {item_name}\n'.format(**substitutes_base)
     for lang in langs:
         substitutes = {
             **substitutes_base,
             'langcode': lang,
             'text': escape(data[lang]),
-            'suppress_marker_if_updated_text_empty':  '\'' if suppressmarker_perlang[lang] else '',
+            'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
         }
-        syntax_add = syntax_add + '{suppress_marker_if_needs_updating}\' {langcode} label: {text}\n'.format(**substitutes)
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' {langcode} label: {text}\n'.format(**substitutes)
     for lang in langs:
         substitutes = {
             **substitutes_base,
             'langcode': lang,
             'text': escape(data[lang]),
-            'suppress_marker_if_updated_text_empty':  '\'' if suppressmarker_perlang[lang] else '',
+            'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
         }
-        syntax_add = syntax_add + '{suppress_marker_if_needs_updating}{suppress_marker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
-    syntax_add = syntax_add + '\n\n'
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
+    syntax_piece_add = syntax_piece_add + '\n\n'
 
-    return syntax_add
+    return syntax_piece_add
 
 
 
@@ -137,9 +140,9 @@ def produce_scripts(map,config={}):
                 
                 if 'update' not in df.columns:
                     raise Exception('Error: "update" column not found')
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_sharedlists_item_syntax)
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_sharedlists_item_syntax, config)
 
-                resulting_syntax = resulting_syntax + syntax_add
+                resulting_syntax = resulting_syntax + syntax_piece_add
                 
             except Exception as e:
                 print('Error: failed when processing shared list {n}'.format(n=item_name),file=sys.stderr)
@@ -154,9 +157,11 @@ def produce_scripts(map,config={}):
 
             try:
                 
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_fields_item_syntax)
+                if 'update' not in df.columns:
+                    raise Exception('Error: "update" column not found')
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_fields_item_syntax, config)
 
-                resulting_syntax = resulting_syntax + syntax_add
+                resulting_syntax = resulting_syntax + syntax_piece_add
                 
             except Exception as e:
                 print('Error: failed when processing field {n}'.format(n=item_name),file=sys.stderr)
@@ -171,9 +176,11 @@ def produce_scripts(map,config={}):
 
             try:
                 
-                syntax_add = produce_variable_syntax(item_name, row, langs, produce_pages_item_syntax)
+                if 'update' not in df.columns:
+                    raise Exception('Error: "update" column not found')
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_pages_item_syntax, config)
 
-                resulting_syntax = resulting_syntax + syntax_add
+                resulting_syntax = resulting_syntax + syntax_piece_add
                 
             except Exception as e:
                 print('Error: failed when processing page {n}'.format(n=item_name),file=sys.stderr)
