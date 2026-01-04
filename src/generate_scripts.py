@@ -1,30 +1,24 @@
-# import os, time, re, sys
-import traceback, sys # for pretty-printing any issues that happened during runtime; if we hit FileNotFound I don't appreciate when a log traceback is shown, the error should be simple and clear
-from datetime import datetime
-# from dateutil import tz
-import argparse
-from pathlib import Path
-import re
-import json
 
-import pandas as pd
+import sys
+
+import re
+
 
 
 if __name__ == '__main__':
     # run as a program
-    # import plugins
-    from read_excel import Map
-    from prepare_scripts import produce_scripts
+    import prepare_scripts_TEMPLATE as TEMPLATE
 elif '.' in __name__:
     # package
-    # from . import plugins
-    from .read_excel import Map
-    from .prepare_scripts import produce_scripts
+    from . import generate_scripts_template as TEMPLATE
 else:
     # included with no parent package
-    # import plugins
-    from read_excel import Map
-    from prepare_scripts import produce_scripts
+    import prepare_scripts_TEMPLATE as TEMPLATE
+
+
+
+
+MDD_TRANSLATORSCOMMENT_PROPERTY_NAME = 'SEToolOverlayHelper_TranslatorsComment'
 
 
 
@@ -34,104 +28,216 @@ else:
 
 
 
-def entry_point(config={}):
-    try:
-        time_start = datetime.now()
-        script_name = 'mdmtoolsap translation overlay codegen script'
+def sanitize_text(s):
+    s = '{s}'.format(s=s) # anyway we are writing it as text
+    s = s.replace("\r", "\n")
+    # Remove other invalid control chars
+    s = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", s)
+    s = s.replace('"','""')
+    s = s.replace("\n",'" + newline + "')
+    return s
 
-        parser = argparse.ArgumentParser(
-            description="Produce a ready mrs script to write updates to MDD",
-            prog='mdmtoolsap --program generate_overlays_script',
-        )
-        parser.add_argument(
-            '--inpfile',
-            help='Input Excel file location',
-            type=str,
-            required=True
-        )
-        parser.add_argument(
-            '--outfile',
-            help='Desird name for the resulting script',
-            type=str,
-            required=True,
-        )
-        parser.add_argument(
-            '--flags',
-            help='Possible comma-separate flags that change program behavior: `print_not_updated_lines_commented_out` to include all rows inm export but keep those where "update" column is not punched commented out (as opposed to those lines being cmopletely skipped by default), `dont_write_translators_comments_to_mdd` to not include code that writes comment column to MDD',
-            type=str,
-            required=False,
-        )
-        args = None
-        args_rest = None
-        if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
-            args, args_rest = parser.parse_known_args()
+
+
+
+# changes SL_GlobaslBrands.Categories[Amazon] (address string found in Excel) into mdm.Types["SL_GlobalBrands"].Elements["Amazon"] (address string that should be used in syntax)
+def produce_sharedlists_item_syntax(item_name):
+    item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
+    if not item_name_parse_matches:
+        raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
+    return 'objMDM{iterative_fields}{add_subelement}'.format(
+        iterative_fields = ''.join([ '.{node}["{name}"]'.format(node='Types' if i==0 else 'Elements',name=re.sub(r'^\s*?(\w+)\s*?(?:\[\s*?\.\.\s*?\])?\s*?$',lambda m: m[1],n,flags=re.I)) for i,n in enumerate('{match}'.format(match=item_name_parse_matches[1]).split('.')) ]),
+        add_subelement = re.sub(r'^\s*?(\.)((?:Categories|Elements))(\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin_prefix}{begin_field}{begin_suffix}"{body}"{end}'.format(begin_prefix=m[1],begin_field='Elements',begin_suffix=m[3],body=m[4],end=m[5]),item_name_parse_matches[2],flags=re.I),
+    )
+
+# changes Gender.Categories[Male] (address string found in Excel) into mdm.Fields["Gender"].Elements["Male"] (address string that should be used in syntax)
+def produce_fields_item_syntax(item_name):
+    item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
+    if not item_name_parse_matches:
+        raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
+    return 'objMDM{iterative_fields}{add_subelement}'.format(
+        iterative_fields = ''.join([ '.{node}["{name}"]'.format(node='Fields' if i==0 else 'Fields',name=re.sub(r'^\s*?(\w+)\s*?(?:\[\s*?\.\.\s*?\])?\s*?$',lambda m: m[1],n,flags=re.I)) for i,n in enumerate('{match}'.format(match=item_name_parse_matches[1]).split('.')) ]),
+        add_subelement = re.sub(r'^\s*?(\.(?:Categories|Elements)\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin}"{body}"{end}'.format(begin=m[1],body=m[2],end=m[3]),item_name_parse_matches[2],flags=re.I),
+    )
+
+# changes PAGE_AgeRange.DV_AgeGender (address string found in Excel) into mdm.Pages["PAGE_AgeGender"].Item["DV_AgeGender"] (address string that should be used in syntax)
+def produce_pages_item_syntax(item_name):
+    item_name_parse_matches = re.match(r'^\s*?(\w+(?:\s*?\[\s*?\.\.\s*?\])?(?:\.\w+(?:\s*?\[\s*?\.\.\s*?\])?)*?)\s*?((?:\.(?:categories|elements)\s*?\[\s*?\{?\s*?(\w+)\s*?\}?\s*?\])?)\s*?$',item_name,flags=re.I)
+    if not item_name_parse_matches:
+        raise Exception('Error: Can\'t parse item name: {n}'.format(n=item_name))
+    return 'objMDM{iterative_fields}{add_subelement}'.format(
+        iterative_fields = ''.join([ '.{node}["{name}"]'.format(node='Pages' if i==0 else 'Item',name=re.sub(r'^\s*?(\w+)\s*?(?:\[\s*?\.\.\s*?\])?\s*?$',lambda m: m[1],n,flags=re.I)) for i,n in enumerate('{match}'.format(match=item_name_parse_matches[1]).split('.')) ]),
+        add_subelement = re.sub(r'^\s*?(\.(?:Categories|Elements)\s*?\[\s*?\{?\s*?)\s*?(\w+)\s*?(\}?\s*?\])\s*?$',lambda m: '{begin}"{body}"{end}'.format(begin=m[1],body=m[2],end=m[3]),item_name_parse_matches[2],flags=re.I),
+    )
+
+
+
+
+# generates a block of lines with syntax for each variable, that start with a comment with variable name
+def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
+    syntax_piece_add = ''
+
+    # if that's a root item (ampy string as an address), we don't have anything to update here, just skip
+    if re.match(r'^\s*?$',item_name,flags=re.I):
+        return ''
+    
+    # ok, prepare local variables with all the translated_texts - texts, inserts, translator's comment, helper variables that indicate if something was updated, and if we want it to get updated in MDD...
+    item_path = produce_item_syntax(item_name)
+
+    update_column_flag = row['update']
+    variable_needs_updating = False if not update_column_flag or len(update_column_flag)==0 else ( True if re.match(r'^\s*?(?:y|yes|x|1|affirmative|true)\s*?$',update_column_flag,flags=re.I) else ( False if re.match(r'^\s*?(?:n|no|0|false|none)\s*?$',update_column_flag,flags=re.I) else ( not not update_column_flag ) ) )
+
+    translators_comment = row['comment']
+    has_translators_comment = not not translators_comment and len(translators_comment.strip())>0
+    
+    translated_texts = {}
+    is_overlay_empty = {}
+    need_write_translators_comments_to_mdd = False
+    if 'flags' in config and 'write_translators_comments_to_mdd' in config['flags'] and not not config['flags']['write_translators_comments_to_mdd']:
+        need_write_translators_comments_to_mdd = True
+    
+    for lang in langs:
+        col = 'langcode-{code}'.format(code=lang)
+        translated_texts[lang] = row[col]
+        if not not translated_texts[lang] or len(translated_texts[lang])>0:
+            is_overlay_empty[lang] = False
         else:
-            args = parser.parse_args()
+            is_overlay_empty[lang] = True
+    
+    # ok, finally, should we skip?
+    should_skip = False
+    if not variable_needs_updating:
+        if 'flags' in config and 'print_not_updated_lines_commented_out' in config['flags'] and not not config['flags']['print_not_updated_lines_commented_out']:
+            should_skip = False
+        else:
+            if need_write_translators_comments_to_mdd and has_translators_comment:
+                should_skip = False
+            else:
+                should_skip= True
+    
+    if should_skip:
+        return ''
 
-        print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
+    # prepare text inserts for syntax
+    substitutes_base = {
+        'linecommentmarker_if_var_needs_updating': '\'' if not variable_needs_updating else '',
+        'item_name': item_name,
+        'item_path': item_path,
+    }
 
-        input_excel_filename = None
-        if args.inpfile:
-            input_excel_filename = Path(args.inpfile)
-
-        #print('{script_name}: reading {fname}'.format(fname=input_excel_filename,script_name=script_name))
-        if not(Path(input_excel_filename).is_file()):
-            raise FileNotFoundError('File not found: {fname}'.format(fname=input_excel_filename))
-        
-        config = {
-            'flags': {
-                'write_translators_comments_to_mdd': True, # that would be the default, unless "dont_write_translators_comments_to_mdd" flag is set
-            },
+    # 1. first line - a comment with variable name
+    syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' variable: {item_name}\n'.format(**substitutes_base)
+    # 2. add comments listing all actual translations provided in Excel
+    for lang in langs:
+        substitutes = {
+            **substitutes_base,
+            'langcode': lang,
+            'text': sanitize_text(translated_texts[lang]),
+            'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
         }
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}\' {langcode} label: {text}\n'.format(**substitutes)
+    # 3. add a line that writes translator's comment to MDD
+    if has_translators_comment:
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_comments_need_to_be_written_to_mdd}{item_path}.Properties.Item["{comment_prop_name}"] = "{text}"\n'.format(
+            **{
+                **substitutes_base,
+                'linecommentmarker_if_var_needs_updating': '\'' if not variable_needs_updating and not need_write_translators_comments_to_mdd else '',
+                'linecommentmarker_if_comments_need_to_be_written_to_mdd': '' if need_write_translators_comments_to_mdd else '\'',
+                'comment_prop_name': MDD_TRANSLATORSCOMMENT_PROPERTY_NAME,
+                'text': sanitize_text(translators_comment),
+            }
+        )
+    # 4. now add syntax to actually write translated texts to MDD
+    for lang in langs:
+        substitutes = {
+            **substitutes_base,
+            'langcode': lang,
+            'text': sanitize_text(translated_texts[lang]),
+            'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
+        }
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
+    # 5. done, add 2 more trailing line breaks
+    syntax_piece_add = syntax_piece_add + '\n\n'
 
-        if args.flags:
-            for flag in args.flags.split(','):
-                if flag.lower().strip()=='print_not_updated_lines_commented_out'.lower().strip():
-                    config['flags']['print_not_updated_lines_commented_out'] = True
-                elif flag.lower().strip()=='dont_write_translators_comments_to_mdd'.lower().strip():
-                    config['flags']['write_translators_comments_to_mdd'] = False
-                else:
-                    raise Exception('Error: {script_name}: Unrecognized flag: {flag}'.format(script_name=script_name,flag=flag))
+    # and we finished, return the resulting syntax back
+    return syntax_piece_add
 
-        map = Map(input_excel_filename,config)
-        result = produce_scripts(map,config)
+
+
+
+
+
+def produce_scripts(map,config={}):
+
+    langs = map.langs
+
+    resulting_syntax = ''
+
+    # process section shared lists
+    if 'shared_lists' in map.data_sections:
         
-        out_fname = None
-        if args.outfile:
-            out_fname = Path(args.outfile)
-        out_fname = Path.resolve(out_fname)
+        df = map.data_sections['shared_lists']
 
-        print('{script_name}: saving as "{fname}"'.format(fname=out_fname,script_name=script_name))
-        if not not result:
-            with open(out_fname, 'w', encoding='utf-8') as outfile:
-                outfile.write(result)
-        else:
-            raise Exception('Error: inp file was not opened and loaded, something was wrong')
+        for item_name, row in df.iterrows():
 
-        time_finish = datetime.now()
-        print('{script_name}: finished at {dt} (elapsed {duration})'.format(dt=time_finish,duration=time_finish-time_start,script_name=script_name))
+            try:
+                
+                if 'update' not in df.columns:
+                    raise Exception('Error: "update" column not found')
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_sharedlists_item_syntax, config)
 
-    except Exception as e:
-        # for pretty-printing any issues that happened during runtime; if we hit FileNotFound I don't appreciate when a log traceback is shown, the error should be simple and clear
-        # the program is designed to be user-friendly
-        # that's why we reformat error messages a little bit
-        # stack trace is still printed (I even made it longer to 20 steps!)
-        # but the error message itself is separated and printed as the last message again
+                resulting_syntax = resulting_syntax + syntax_piece_add
+                
+            except Exception as e:
+                print('Error: failed when processing shared list {n}'.format(n=item_name),file=sys.stderr)
+                raise e
 
-        # for example, I don't write 'print('File Not Found!');exit(1);', I just write 'raise FileNotFoundErro()'
-        print('',file=sys.stderr)
-        print('Stack trace:',file=sys.stderr)
-        print('',file=sys.stderr)
-        traceback.print_exception(e,limit=20)
-        print('',file=sys.stderr)
-        print('',file=sys.stderr)
-        print('',file=sys.stderr)
-        print('Error:',file=sys.stderr)
-        print('',file=sys.stderr)
-        print('{e}'.format(e=e),file=sys.stderr)
-        print('',file=sys.stderr)
-        exit(1)
+    # process section fields
+    if 'fields' in map.data_sections:
+        
+        df = map.data_sections['fields']
+
+        for item_name, row in df.iterrows():
+
+            try:
+                
+                if 'update' not in df.columns:
+                    raise Exception('Error: "update" column not found')
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_fields_item_syntax, config)
+
+                resulting_syntax = resulting_syntax + syntax_piece_add
+                
+            except Exception as e:
+                print('Error: failed when processing field {n}'.format(n=item_name),file=sys.stderr)
+                raise e
+
+    # process section pages
+    if 'pages' in map.data_sections:
+        
+        df = map.data_sections['pages']
+
+        for item_name, row in df.iterrows():
+
+            try:
+                
+                if 'update' not in df.columns:
+                    raise Exception('Error: "update" column not found')
+                syntax_piece_add = produce_syntax_piece(item_name, row, langs, produce_pages_item_syntax, config)
+
+                resulting_syntax = resulting_syntax + syntax_piece_add
+                
+            except Exception as e:
+                print('Error: failed when processing page {n}'.format(n=item_name),file=sys.stderr)
+                raise e
 
 
-if __name__ == '__main__':
-    entry_point({'arglist_strict':True})
+    result = '{part_begin}{part_body}{part_end}'.format(
+        part_begin = TEMPLATE.template_begin.replace('<<MDDINPNAME>>',map.mdd_fname).replace('<<MDDOUTNAME>>',map.mdd_patched_fname).replace('<<LOCALVARS>>',''.join([', sLangText{langcode}'.format(langcode=lang) for lang in langs])),
+        part_body = resulting_syntax,
+        part_end = TEMPLATE.template_end,
+    )
+
+    return result
+
+
+

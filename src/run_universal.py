@@ -13,22 +13,22 @@ if __name__ == '__main__':
     from lib.mdmreadpy import read_mdd
     from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
-    import generate_scripts
-    import prep_mddread_scheme
+    import program_generate_overlays_script
+    import program_prep_mddread_scheme
 elif '.' in __name__:
     # package
     from .lib.mdmreadpy import read_mdd
     from .lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
     from .lib.mdmexcelreportpy import report_create as report_excel_create
-    from . import generate_scripts
-    from . import prep_mddread_scheme
+    from . import program_generate_overlays_script
+    from . import program_prep_mddread_scheme
 else:
     # included with no parent package
     from lib.mdmreadpy import read_mdd
     from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
     from lib.mdmexcelreportpy import report_create as report_excel_create
-    import generate_scripts
-    import prep_mddread_scheme
+    import program_generate_overlays_script
+    import program_prep_mddread_scheme
 
 
 
@@ -48,10 +48,10 @@ def call_report_excel_program():
     return report_excel_create.entry_point({'arglist_strict':False})
 
 def call_generate_overlays_script():
-    return generate_scripts.entry_point({'arglist_strict':False})
+    return program_generate_overlays_script.entry_point({'arglist_strict':False})
 
 def call_prepmddscheme_program():
-    return prep_mddread_scheme.entry_point({'arglist_strict':False})
+    return program_prep_mddread_scheme.entry_point({'arglist_strict':False})
 
 
 
