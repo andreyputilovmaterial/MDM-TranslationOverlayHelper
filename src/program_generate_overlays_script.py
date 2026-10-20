@@ -31,7 +31,13 @@ else:
 
 
 
-def entry_point(config={}):
+# STDOUT_COLOR_RED = "\033[91m"
+STDOUT_COLOR_RED = "\033[31m"
+STDOUT_COLOR_RESET = "\033[0m"
+STDOUT_COLOR_GREEN = "\033[32m"
+
+
+def entry_point(*argcs,**kwargs):
     try:
         time_start = datetime.now()
         script_name = 'mdmtoolsap translation overlay codegen script'
@@ -58,12 +64,12 @@ def entry_point(config={}):
             type=str,
             required=False,
         )
-        args = None
-        args_rest = None
-        if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
-            args, args_rest = parser.parse_known_args()
-        else:
-            args = parser.parse_args()
+        # args = None
+        # args_rest = None
+        # if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
+        #     args, args_rest = parser.parse_known_args()
+        # else:
+        args = parser.parse_args(*argcs,**kwargs)
 
         print('{script_name}: script started at {dt}'.format(dt=time_start,script_name=script_name))
 
@@ -98,7 +104,7 @@ def entry_point(config={}):
             out_fname = Path(args.outfile)
         out_fname = Path.resolve(out_fname)
 
-        print('{script_name}: saving as "{fname}"'.format(fname=out_fname,script_name=script_name))
+        print(f'{script_name}: {STDOUT_COLOR_GREEN}saving as "{out_fname}"{STDOUT_COLOR_RESET}')
         if not not result:
             with open(out_fname, 'w', encoding='utf-8') as outfile:
                 outfile.write(result)
@@ -123,12 +129,12 @@ def entry_point(config={}):
         print('',file=sys.stderr)
         print('',file=sys.stderr)
         print('',file=sys.stderr)
-        print('Error:',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}Error:{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
-        print('{e}'.format(e=e),file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
         exit(1)
 
 
 if __name__ == '__main__':
-    entry_point({'arglist_strict':True})
+    entry_point()

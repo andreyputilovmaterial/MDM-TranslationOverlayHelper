@@ -35,23 +35,29 @@ else:
 
 
 
-def call_read_mdd_program():
-    return read_mdd.entry_point({'arglist_strict':False})
+# STDOUT_COLOR_RED = "\033[91m"
+STDOUT_COLOR_RED = "\033[31m"
+STDOUT_COLOR_RESET = "\033[0m"
+STDOUT_COLOR_GREEN = "\033[32m"
 
-def call_report_program():
+
+def call_read_mdd_program(*argcs,**kwargs):
+    return read_mdd.entry_point(*argcs,**kwargs)
+
+def call_report_program(*argcs,**kwargs):
     raise Exception('deprecated: --program report is deprecated here; please use --program report_html or --program report_excel instead')
 
-def call_report_html_program():
-    return report_html_create.entry_point({'arglist_strict':False})
+def call_report_html_program(*argcs,**kwargs):
+    return report_html_create.entry_point(*argcs,**kwargs)
 
-def call_report_excel_program():
-    return report_excel_create.entry_point({'arglist_strict':False})
+def call_report_excel_program(*argcs,**kwargs):
+    return report_excel_create.entry_point(*argcs,**kwargs)
 
-def call_generate_overlays_script():
-    return program_generate_overlays_script.entry_point({'arglist_strict':False})
+def call_generate_overlays_script(*argcs,**kwargs):
+    return program_generate_overlays_script.entry_point(*argcs,**kwargs)
 
-def call_prepmddscheme_program():
-    return program_prep_mddread_scheme.entry_point({'arglist_strict':False})
+def call_prepmddscheme_program(*argcs,**kwargs):
+    return program_prep_mddread_scheme.entry_point(*argcs,**kwargs)
 
 
 
@@ -82,7 +88,7 @@ def main():
         if args.program:
             program = '{arg}'.format(arg=args.program)
             if program in run_programs:
-                run_programs[program]()
+                run_programs[program](args_rest)
             else:
                 raise AttributeError('program to run not recognized: {program}'.format(program=args.program))
         else:
@@ -102,9 +108,9 @@ def main():
         print('',file=sys.stderr)
         print('',file=sys.stderr)
         print('',file=sys.stderr)
-        print('Error:',file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}Error:{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
-        print('{e}'.format(e=e),file=sys.stderr)
+        print(f'{STDOUT_COLOR_RED}{e}{STDOUT_COLOR_RESET}',file=sys.stderr)
         print('',file=sys.stderr)
         exit(1)
 
