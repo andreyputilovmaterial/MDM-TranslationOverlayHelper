@@ -8,10 +8,19 @@ IF EXIST dist (
 )
 DEL /F /Q dist\*
 
+ECHO -
+ECHO -
+ECHO Build submodule src\lib\mdmreadpy (generates its GENERATED files)...
+PUSHD src\lib\mdmreadpy
+CALL build.bat
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
+POPD
+ECHO Done
+
 ECHO Calling pinliner...
 REM REM :: comment: please delete .pyc files before every call of the mdmoverlayhelper_bundle - this is implemented in my fork of the pinliner
-@REM python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py --verbose
-python src-make\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py
+@REM python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py --verbose
+python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
@@ -35,12 +44,16 @@ POPD
 ECHO -
 ECHO -
 ECHO Bring LICENSE, README.md and requirements.txt to dist...
-IF NOT EXIST requirements.txt (
-    ECHO # Runtime dependencies, one per line. > requirements.txt
-)
 COPY /Y LICENSE dist\LICENSE
 COPY /Y README.md dist\README.md
 COPY /Y requirements.txt dist\requirements.txt
+ECHO Done
+
+ECHO -
+ECHO -
+ECHO Verifying the bundle imports correctly...
+python dist\mdmoverlayhelper_bundle.py --program done
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
 ECHO End

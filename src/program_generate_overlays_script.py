@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # run as a program
     # import plugins
     from read_excel import Map
-    from prepare_scripts import produce_scripts
+    from generate_scripts import produce_scripts
 elif '.' in __name__:
     # package
     # from . import plugins
@@ -21,7 +21,7 @@ else:
     # included with no parent package
     # import plugins
     from read_excel import Map
-    from prepare_scripts import produce_scripts
+    from generate_scripts import produce_scripts
 
 
 
@@ -64,6 +64,13 @@ def entry_point(*argcs,**kwargs):
             type=str,
             required=False,
         )
+        parser.add_argument(
+            '--default-language',
+            help='Language code treated as the source/default language (default "ENU"). The source text is not an overlay, so its translation write statement is suppressed (commented out with a leading single quote) in the generated .mrs script.',
+            type=str,
+            required=False,
+            default='ENU',
+        )
         # args = None
         # args_rest = None
         # if( ('arglist_strict' in config) and (not config['arglist_strict']) ):
@@ -82,6 +89,7 @@ def entry_point(*argcs,**kwargs):
             raise FileNotFoundError('File not found: {fname}'.format(fname=input_excel_filename))
         
         config = {
+            'default_language': args.default_language.strip() if args.default_language else 'ENU',
             'flags': {
                 'write_translators_comments_to_mdd': True, # that would be the default, unless "dont_write_translators_comments_to_mdd" flag is set
             },

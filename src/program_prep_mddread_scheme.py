@@ -4,7 +4,7 @@ from datetime import datetime
 # from dateutil import tz
 import argparse
 from pathlib import Path
-import re
+# import re
 import json
 
 
@@ -38,12 +38,17 @@ MDD_TRANSLATORSCOMMENT_PROPERTY_NAME = 'SEToolOverlayHelper_TranslatorsComment'
 
 
 
-def upd(data,config={}):
+def update_json_scheme(data,config : dict | None = None):
+    if config is None:
+        config = {}
     columns_global = ((data or {})['report_scheme'] if 'report_scheme' in (data or {}) else {})['columns'] if 'columns' in (((data or {})['report_scheme'] if 'report_scheme' in (data or {}) else {})) else ['name']
 
     errorhandling_counter = { 'num': 0 }
 
-    def upd_record(record_data):
+    def update_record(record_data):
+
+        def norm(name):
+            return f'{name}'.strip().lower()
 
         name = record_data['name'] if 'name' in record_data else '{s}'.format(s=record_data)
 
@@ -58,9 +63,9 @@ def upd(data,config={}):
                 try:
                     for prop in properties:
                         prop_name = prop['name'] if 'name' in prop else ''
-                        prop_name = '{s}'.format(s=prop_name)
-                        if prop_name.strip().lower() == MDD_TRANSLATORSCOMMENT_PROPERTY_NAME.strip().lower():
-                            comment = '{s}'.format(s=prop['value'])
+                        prop_name = f'{prop_name}'
+                        if norm(prop_name) == norm(MDD_TRANSLATORSCOMMENT_PROPERTY_NAME):
+                            comment = f'{prop["value"]}'
                 except Exception as e:
                     comment = 'Error: failed to read properties: {e}'.format(e=e)
                     if errorhandling_counter['num']<=1:
@@ -70,7 +75,7 @@ def upd(data,config={}):
             if not comment:
                 comment = ''
             if comment_preserve:
-                comment = '{comment}; {comment_preserve}'.format(comment=comment,comment_preserve=comment_preserve)
+                comment = f'{comment}; {comment_preserve}'
             
             return {
                 **record_data,
@@ -79,20 +84,14 @@ def upd(data,config={}):
             }
             
         except Exception as e:
-            print('Error: failed when processing row "{name}"'.format(name=name))
-            raise e
+            print('Error: failed when processing row "{name}"'.format(name=name),file=sys.stderr)
+            raise
 
-    def upd_section(section_data):
-
-        if ('name' not in section_data) or not section_data['name']:
-            return section_data
-        
+    def update_section_with_translations(section_data):
         name = section_data['name']
-
         try:
-
             columns = [c for c in section_data['columns']] if 'columns' in section_data else [c for c in columns_global]
-            columns = [c for c in columns if c not in ['properties','attributes']]
+            columns = [c for c in columns if c not in ['properties','attributes','label',]]
             if 'name' not in columns:
                 columns = ['name',*columns]
             if 'update' not in columns:
@@ -101,22 +100,49 @@ def upd(data,config={}):
             #     raise Exception('the file already includes the "comment" column - we are not eager to overwrite')
             if 'comment' not in columns:
                 columns.append('comment')
-            
-            content = [ upd_record(s) for s in (section_data['content'] if 'content' in section_data else []) if ('name' in s) and (not not s['name']) and not(s['name']=='') ]
-
+            content = [ update_record(s) for s in (section_data['content'] if 'content' in section_data else []) if ('name' in s) and (not not s['name']) and not(s['name']=='') ]
             return {
                 **section_data,
                 'columns': columns,
                 'content': content,
             }
-        
         except Exception as e:
-            print('Error: failed when processing section "{name}"'.format(name=name))
-            raise e
+            print('Error: failed when processing section "{name}"'.format(name=name),file=sys.stderr)
+            raise
+
+    def update_other_section(section_data):
+        def should_include(column):
+            if column in ['properties','attributes']:
+                return False
+            if column.startswith('langcode-'):
+                return False
+            return True
+        name = section_data['name']
+        try:
+            columns = [c for c in section_data['columns']] if 'columns' in section_data else [c for c in columns_global]
+            columns = [c for c in columns if should_include(c)]
+            return {
+                **section_data,
+                'columns': columns,
+            }
+        except Exception as e:
+            print('Error: failed when processing section "{name}"'.format(name=name),file=sys.stderr)
+            raise
     
+    def update_section(section_data):
+        def detect_if_section_with_translations(section_data):
+            if ('name' not in section_data) or not section_data['name']:
+                return False
+            name = section_data['name']
+            if name in ('','overview','languages',):
+                return False
+            return True
+        is_section_with_translations = detect_if_section_with_translations(section_data)
+        return update_section_with_translations(section_data) if is_section_with_translations else update_other_section(section_data)
+
     return {
         **data,
-        'sections': [ upd_section(s) for s in (data['sections'] if 'sections' in data else []) ],
+        'sections': [ update_section(s) for s in (data['sections'] if 'sections' in data else []) ],
     }
 
 
@@ -193,7 +219,7 @@ def entry_point(*argcs,**kwargs):
         # if args.flags:
         #     config['flags'] = '{s}'.format(s=args.flags).split(',')
 
-        result = upd(inpfile_map_in_json,config)
+        result = update_json_scheme(inpfile_map_in_json,config)
         
         print(f'{script_name}: {STDOUT_COLOR_GREEN}saving as "{output_mdd_filename}"{STDOUT_COLOR_RESET}')
         

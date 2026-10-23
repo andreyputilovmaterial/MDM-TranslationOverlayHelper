@@ -20,6 +20,12 @@ else:
 
 MDD_TRANSLATORSCOMMENT_PROPERTY_NAME = 'SEToolOverlayHelper_TranslatorsComment'
 
+# Language code treated as the source/default language (conventionally "ENU" = en-us).
+# The source text is not an overlay, so its translation write statement is suppressed
+# (commented out) in the generated .mrs script. Can be overridden via the
+# --default-language flag on `generate_overlays_script`.
+DEFAULT_LANGUAGE = 'ENU'
+
 
 
 
@@ -77,7 +83,7 @@ def produce_pages_item_syntax(item_name):
 def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
     syntax_piece_add = ''
 
-    # if that's a root item (ampy string as an address), we don't have anything to update here, just skip
+    # if that's a root item (emmpy string as an address), we don't have anything to update here, just skip
     if re.match(r'^\s*?$',item_name,flags=re.I):
         return ''
     
@@ -95,6 +101,8 @@ def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
     need_write_translators_comments_to_mdd = False
     if 'flags' in config and 'write_translators_comments_to_mdd' in config['flags'] and not not config['flags']['write_translators_comments_to_mdd']:
         need_write_translators_comments_to_mdd = True
+
+    default_language = '{s}'.format(s=config['default_language'] if 'default_language' in config else DEFAULT_LANGUAGE).strip()
     
     for lang in langs:
         col = 'langcode-{code}'.format(code=lang)
@@ -154,8 +162,10 @@ def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
             'langcode': lang,
             'text': sanitize_text(translated_texts[lang]),
             'linecommentmarker_if_updated_text_empty':  '\'' if is_overlay_empty[lang] else '',
+            # the source/default language is not an overlay, so its write statement is suppressed
+            'linecommentmarker_if_default_language': '\'' if '{s}'.format(s=lang).strip().upper() == default_language.upper() else '',
         }
-        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
+        syntax_piece_add = syntax_piece_add + '{linecommentmarker_if_var_needs_updating}{linecommentmarker_if_default_language}{linecommentmarker_if_updated_text_empty}{item_path}.Labels["Label"].Text["Question"]["{langcode}"] = "{text}"\n'.format(**substitutes)
     # 5. done, add 2 more trailing line breaks
     syntax_piece_add = syntax_piece_add + '\n\n'
 
@@ -167,7 +177,10 @@ def produce_syntax_piece(item_name, row, langs, produce_item_syntax, config={}):
 
 
 
-def produce_scripts(map,config={}):
+def produce_scripts(map,config: dict | None = None):
+
+    if config is None:
+        config = {}
 
     langs = map.langs
 
@@ -190,7 +203,7 @@ def produce_scripts(map,config={}):
                 
             except Exception as e:
                 print('Error: failed when processing shared list {n}'.format(n=item_name),file=sys.stderr)
-                raise e
+                raise
 
     # process section fields
     if 'fields' in map.data_sections:
@@ -209,7 +222,7 @@ def produce_scripts(map,config={}):
                 
             except Exception as e:
                 print('Error: failed when processing field {n}'.format(n=item_name),file=sys.stderr)
-                raise e
+                raise
 
     # process section pages
     if 'pages' in map.data_sections:
@@ -228,7 +241,7 @@ def produce_scripts(map,config={}):
                 
             except Exception as e:
                 print('Error: failed when processing page {n}'.format(n=item_name),file=sys.stderr)
-                raise e
+                raise
 
 
     result = '{part_begin}{part_body}{part_end}'.format(

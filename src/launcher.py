@@ -10,23 +10,23 @@ import traceback, sys
 
 if __name__ == '__main__':
     # run as a program
-    from lib.mdmreadpy import read_mdd
-    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
-    from lib.mdmexcelreportpy import report_create as report_excel_create
+    from lib.mdmreadpy.src import read_mdd
+    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
+    from lib.mdmexcelreportpy.src import report_create as report_excel_create
     import program_generate_overlays_script
     import program_prep_mddread_scheme
 elif '.' in __name__:
     # package
-    from .lib.mdmreadpy import read_mdd
-    from .lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
-    from .lib.mdmexcelreportpy import report_create as report_excel_create
+    from .lib.mdmreadpy.src import read_mdd
+    from .lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
+    from .lib.mdmexcelreportpy.src import report_create as report_excel_create
     from . import program_generate_overlays_script
     from . import program_prep_mddread_scheme
 else:
     # included with no parent package
-    from lib.mdmreadpy import read_mdd
-    from lib.mdmreadpy.lib.mdmreportpy import report_create as report_html_create
-    from lib.mdmexcelreportpy import report_create as report_excel_create
+    from lib.mdmreadpy.src import read_mdd
+    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
+    from lib.mdmexcelreportpy.src import report_create as report_excel_create
     import program_generate_overlays_script
     import program_prep_mddread_scheme
 
@@ -59,6 +59,14 @@ def call_generate_overlays_script(*argcs,**kwargs):
 def call_prepmddscheme_program(*argcs,**kwargs):
     return program_prep_mddread_scheme.entry_point(*argcs,**kwargs)
 
+def call_done_program(*argcs,**kwargs):
+    # no-op program used by build.bat to verify the bundle's imports resolve correctly
+    msg = f'''
+{STDOUT_COLOR_GREEN}done{STDOUT_COLOR_RESET}
+    '''
+    print(msg)
+    return True
+
 
 
 run_programs = {
@@ -68,6 +76,7 @@ run_programs = {
     'report_excel': call_report_excel_program,
     'generate_overlays_script': call_generate_overlays_script,
     'prep_mddread_scheme': call_prepmddscheme_program,
+    'done': call_done_program,
 }
 
 

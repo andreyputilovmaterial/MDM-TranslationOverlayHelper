@@ -30,7 +30,9 @@ class Map:
                     if col not in columns_seen:
                         columns_unique.append(col)
                         columns_seen.add(col)
-                if sheet_name=='fields':
+                if sheet_name=='languages':
+                    self.data_sections['languages'] = df
+                elif sheet_name=='fields':
                     self.data_sections['fields'] = df
                 elif sheet_name=='shared_lists':
                     self.data_sections['shared_lists'] = df

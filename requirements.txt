@@ -1,2 +1,11 @@
 # Runtime dependencies (pip-installable packages), one per line.
 # Install with:  pip install -r requirements.txt
+#
+# Versions are intentionally kept wide (a minimal floor only) so this code works across
+# a wide range of environments.
+
+pandas>=1.2
+xlsxwriter>=1.0
+openpyxl>=3.0
+# Windows-only; required to read MDDs via COM (mdmreadpy).
+pywin32>=300; sys_platform == "win32"
