@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL run_init.bat
+if errorlevel 1 exit /b %errorlevel%
+
 
 @REM :: insert your files here
 SET "MDD_FILE=Data\P25xSL0006.mdd"
@@ -41,27 +44,27 @@ ECHO -
 ECHO 1. read MDD
 ECHO read from: %MDD_FILE%
 ECHO write to: .json
-python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features attributes,properties,label,translations --config-section languages,shared_lists,fields,pages --config-contexts Question --config-sharedlists-listcats stepinto
-@REM python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features translations --config-section shared_lists,fields,pages --config-contexts Question --config-sharedlists-listcats stepover
+.venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features attributes,properties,label,translations --config-section languages,shared_lists,fields,pages --config-contexts Question --config-sharedlists-listcats stepinto
+@REM .venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "%MDD_FILE%" --config-features translations --config-section shared_lists,fields,pages --config-contexts Question --config-sharedlists-listcats stepover
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 IF %CONFIG_PRODUCE_HTML_MDD% (
     ECHO -
     ECHO 1.1. generate html
-    python dist/mdmoverlayhelper_bundle.py --program report_html --inpfile "%MDD_FILE_SCHEME%"
+    .venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program report_html --inpfile "%MDD_FILE_SCHEME%"
     if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 )
 
 
 ECHO -
 ECHO 2. patch the .json mdd scheme
-python dist/mdmoverlayhelper_bundle.py --program prep_mddread_scheme --inpfile "%MDD_FILE_SCHEME%" --outfile "%MDD_FILE_SCHEME%"
+.venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program prep_mddread_scheme --inpfile "%MDD_FILE_SCHEME%" --outfile "%MDD_FILE_SCHEME%"
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 
 ECHO -
 ECHO 3. generate excel
-python dist/mdmoverlayhelper_bundle.py --program report_excel --inpfile "%MDD_FILE_SCHEME%" --flags mdd_translationoverlays_excel
+.venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program report_excel --inpfile "%MDD_FILE_SCHEME%" --flags mdd_translationoverlays_excel
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 

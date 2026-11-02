@@ -1,6 +1,9 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
+CALL run_init.bat
+if errorlevel 1 exit /b %errorlevel%
+
 
 @REM :: insert your files here
 SET "MDD_FILE=Data\P25xSL0006.mdd"
@@ -73,7 +76,7 @@ ECHO -
 ECHO 3. generate scripts
 ECHO read from: %MDD_FILE%
 ECHO write to: "%OUT_SCRIPT_FILE%"
-python mdmoverlayhelper_bundle.py --program generate_overlays_script --inpfile "%MAP_FILE%" --outfile "%OUT_SCRIPT_FILE%" %CONFIG_FLAGS%
+.venv\Scripts\python.exe dist/mdmoverlayhelper_bundle.py --program generate_overlays_script --inpfile "%MAP_FILE%" --outfile "%OUT_SCRIPT_FILE%" %CONFIG_FLAGS%
 if !ERRORLEVEL! NEQ 0 ( echo ERROR: Failure && pause && goto CLEANUP && exit /b !ERRORLEVEL! )
 
 

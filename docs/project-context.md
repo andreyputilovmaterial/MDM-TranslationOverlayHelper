@@ -34,11 +34,22 @@ updated translations back to the MDD.
 
 ## Build
 
-`build.bat` first builds the `mdmreadpy` submodule (regenerating its `GENERATED` files —
-`_VERSION.py` and the nested `mdmreportpy` HTML template), then runs pinliner over
-`src/` to produce `dist/mdmoverlayhelper_bundle.py`, copies the run `.bat` files plus
-`LICENSE`, `README.md` and `requirements.txt` into `dist/`, and finally verifies the
-bundle loads with `python dist/mdmoverlayhelper_bundle.py --program done`.
+`build.bat` (Windows) / `build.sh` (macOS/Linux) first builds the `mdmreadpy` submodule
+(regenerating its `GENERATED` files — `_VERSION.py` and the nested `mdmreportpy` HTML
+template), then runs pinliner over `src/` to produce `dist/mdmoverlayhelper_bundle.py`,
+copies the run `.bat` files plus `LICENSE`, `README.md` and `requirements.txt` into
+`dist/`, collects each submodule's `requirements.txt` into `dist/optional_dependencies/`,
+copies `run_init.bat`/`run_init.sh` into `dist/`, and finally verifies the bundle loads
+with `--program done`. The distributed run scripts drive the bundle with the venv Python
+(after `run_init`).
+
+## Launching (three ways)
+
+Each program can be launched three equivalent ways (same schema as the other projects):
+1. **Single-file bundle** — `dist/mdmoverlayhelper_bundle.py --program <name>`.
+2. **Direct module** — `python src/program_generate_overlays_script.py ...` /
+   `python src/program_prep_mddread_scheme.py ...`.
+3. **Launcher proxy** — `python src/launcher.py --program <name>`.
 
 ## Generated `.mrs` scripts
 
@@ -49,8 +60,12 @@ generated script because the source text is not an overlay.
 
 ## Dependencies
 
-`requirements.txt` keeps wide floors only: `pandas>=1.2`, `xlsxwriter>=1.0`,
-`openpyxl>=3.0`, `pywin32>=300` (Windows only).
+`requirements.txt` keeps wide floors only for the always-installed core: `pandas>=1.2`,
+`xlsxwriter>=1.0`, `openpyxl>=3.0`. Optional and platform-specific dependencies live in
+each submodule's `requirements.txt` under `src/lib/` (`mdmreadpy`: `pywin32`,
+Windows-only; `mdmreportpy`: `csscompressor`/`rjsmin`; `mdmexcelreportpy`:
+`pandas`/`xlsxwriter`); they are collected into `dist/optional_dependencies/` and
+installed best-effort by `run_init`.
 
 ## Roadmap
 

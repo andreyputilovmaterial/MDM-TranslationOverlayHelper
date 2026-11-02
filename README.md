@@ -30,11 +30,17 @@ The generated `.mrs` file is **mrScriptBasic** (IBM/Unicom Data Model scripting)
 - **Windows**.
 - **IBM/Unicom Professional** installed (provides the `MDM.Document` COM server).
 - **Python 3** with **pywin32** (`win32com.client`) — needed to read the MDD.
-- Python packages: `pandas`, `xlsxwriter`, `openpyxl` (see `requirements.txt`).
+- Core Python packages (always installed): `pandas`, `xlsxwriter`, `openpyxl`
+  (see `requirements.txt`).
 
 > Only *reading* the MDD needs Windows + IBM/Unicom. Writing updates back is done by
 > running the generated `.mrs` script inside IBM/Unicom — this tool doesn't touch the MDD
 > directly.
+
+Optional and platform-specific dependencies (`pywin32`, `csscompressor`/`rjsmin`, …) are
+declared in each submodule's own `requirements.txt` under `src/lib/`; `build.bat`/`build.sh`
+copy them into `dist/optional_dependencies/` and `run_init.bat`/`run_init.sh` install them
+best-effort (a missing optional package only disables the corresponding part).
 
 ## Usage
 
@@ -99,10 +105,39 @@ To rebuild the bundle:
 build.bat
 ```
 
-It builds the `mdmreadpy` submodule first (regenerating its generated files), bundles
-`src/` with pinliner into `dist/mdmoverlayhelper_bundle.py`, copies the batch files and
-`LICENSE`/`README.md`/`requirements.txt` into `dist/`, and verifies the bundle loads with
-`--program done`.
+or, on macOS/Linux, `build.sh`. The build first builds the `mdmreadpy` submodule
+(regenerating its generated files), bundles `src/` with pinliner into
+`dist/mdmoverlayhelper_bundle.py`, copies the batch files and
+`LICENSE`/`README.md`/`requirements.txt` into `dist/`, collects each submodule's
+`requirements.txt` into `dist/optional_dependencies/`, copies `run_init.bat`/`run_init.sh`
+into `dist/`, and verifies the bundle loads with `--program done`.
+
+## Three ways to launch
+
+There is one universal dispatcher (`src/launcher.py`, `--program <name>`) but the tool can
+be started three equivalent ways:
+
+1. **Single-file bundle** (what end users get). `build.bat`/`build.sh` produce
+   `dist/mdmoverlayhelper_bundle.py` and append `from src import launcher; launcher.main()`.
+   Prepare the environment with `run_init`, then run the bundle with the venv Python:
+
+   ```
+   run_init.sh
+   ./.venv/bin/python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "Data\file.mdd"
+   ```
+
+2. **Direct module** (development). Run a program's entry-point module directly:
+
+   ```
+   python src/program_prep_mddread_scheme.py --inpfile file.json --outfile file.json
+   python src/program_generate_overlays_script.py --inpfile file.xlsx --outfile run.mrs
+   ```
+
+3. **Launcher proxy** (development). Run the dispatcher directly:
+
+   ```
+   python src/launcher.py --program read_mdd --mdd "Data\file.mdd"
+   ```
 
 ## Documentation
 
