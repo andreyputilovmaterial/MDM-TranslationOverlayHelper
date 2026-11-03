@@ -1,7 +1,7 @@
 @ECHO OFF
 SETLOCAL enabledelayedexpansion
 
-CALL run_init.bat
+CALL "run_init.bat"
 if errorlevel 1 exit /b %errorlevel%
 
 

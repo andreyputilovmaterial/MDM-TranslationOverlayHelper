@@ -20,20 +20,20 @@ else
 fi
 
 echo "Upd dependencies"
+# === BEGIN GENERATED DEPENDENCIES ===
 "$pythonexecutable" -m pip install -r requirements.txt
-echo "done"
-echo "-"
-echo "-"
-
-# Install optional per-submodule dependencies (best-effort).
-# The distributed copy scans optional_dependencies/ instead.
+# Install optional per-reader/per-reporter dependencies (best-effort).
+# The distributed copy installs these from explicit pip package lists
+# generated at build time (no requirements.txt files ship in dist/).
 if [ -d src/lib ]; then
     for requirements in $(find src/lib -type f -name 'requirements.txt' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/GENERATED/*' | sort); do
         echo "installing optional dependencies: $requirements"
         if ! "$pythonexecutable" -m pip install -r "$requirements"; then
-            echo "WARNING: optional dependencies in $requirements not installed (the corresponding part will be unavailable)"
+            echo "WARNING: optional dependencies in $requirements not installed (the corresponding reader/reporter will be unavailable)"
         fi
     done
 fi
-
-"$pythonexecutable" -m src.launcher --program done
+# === END GENERATED DEPENDENCIES ===
+echo "done"
+echo "-"
+echo "-"

@@ -18,22 +18,23 @@ if exist ".venv\Scripts\python.exe" (
 )
 
 echo Upd dependencies
+@REM === BEGIN GENERATED DEPENDENCIES ===
 "%pythonexecutable%" -m pip install -r requirements.txt
+@REM Install optional per-reader/per-reporter dependencies (best-effort).
+@REM The distributed copy installs these from explicit pip package lists
+@REM generated at build time (no requirements.txt files ship in dist/).
+if exist "src\lib" (
+    for /r "src\lib" %%f in (requirements.txt) do (
+        if exist "%%f" (
+            echo Installing optional dependencies: %%f
+            "%pythonexecutable%" -m pip install -r "%%f"
+            if errorlevel 1 echo WARNING: optional dependencies in %%f not installed - the corresponding reader/reporter will be unavailable
+        )
+    )
+)
+@REM === END GENERATED DEPENDENCIES ===
 echo done
 echo.
 echo.
-
-@REM Install optional per-submodule dependencies (best-effort).
-@REM The distributed copy scans optional_dependencies\ instead.
-if exist "src\lib" (
-    for /r "src\lib" %%f in (requirements.txt) do (
-        echo Installing optional dependencies: %%f
-        "%pythonexecutable%" -m pip install -r "%%f"
-        if errorlevel 1 echo WARNING: optional dependencies in %%f not installed - the corresponding part will be unavailable
-    )
-)
-
-"%pythonexecutable%" -m src.launcher --program done
-if errorlevel 1 exit /b %errorlevel%
 
 endlocal

@@ -25,6 +25,10 @@ updated translations back to the MDD.
 5. `generate_overlays_script` — read the edited `.xlsx` (pandas + openpyxl) and emit the
    `.mrs` script.
 
+Plus two meta-programs on the same launcher: `done` (a dependency-free smoke test the
+build uses to verify the bundle loads) and `version` (prints the git-derived version
+string from `GENERATED/_VERSION.py`).
+
 ## Submodules
 
 - `src/lib/mdmreadpy` — MDD reader producing the JSON report; vendors `mdmreportpy`.
@@ -34,14 +38,16 @@ updated translations back to the MDD.
 
 ## Build
 
-`build.bat` (Windows) / `build.sh` (macOS/Linux) first builds the `mdmreadpy` submodule
-(regenerating its `GENERATED` files — `_VERSION.py` and the nested `mdmreportpy` HTML
-template), then runs pinliner over `src/` to produce `dist/mdmoverlayhelper_bundle.py`,
-copies the run `.bat` files plus `LICENSE`, `README.md` and `requirements.txt` into
-`dist/`, collects each submodule's `requirements.txt` into `dist/optional_dependencies/`,
-copies `run_init.bat`/`run_init.sh` into `dist/`, and finally verifies the bundle loads
-with `--program done`. The distributed run scripts drive the bundle with the venv Python
-(after `run_init`).
+`build.bat` (Windows) / `build.sh` (macOS/Linux) first update the program version
+(`src/GENERATED/_VERSION.py` from `git describe --tags --dirty`), then build the
+`mdmreadpy` submodule (regenerating its `GENERATED` files — `_VERSION.py` and the nested
+`mdmreportpy` HTML template), then run pinliner over `src/` to produce
+`dist/mdmoverlayhelper_bundle.py`, copy the run `.bat` files plus `LICENSE`/`README.md`
+into `dist/`, and run `src_dev_build/inline_run_init.py` to inline the venv setup plus
+explicit `pip install` rows into each distributed launcher. `dist/` therefore ships a
+two-file layout — the bundle plus self-contained `.bat` launchers; no `requirements.txt`,
+`optional_dependencies/` or `run_init.*`. Finally the build verifies the bundle loads
+with `--program done`.
 
 ## Launching (three ways)
 
@@ -61,11 +67,15 @@ generated script because the source text is not an overlay.
 ## Dependencies
 
 `requirements.txt` keeps wide floors only for the always-installed core: `pandas>=1.2`,
-`xlsxwriter>=1.0`, `openpyxl>=3.0`. Optional and platform-specific dependencies live in
-each submodule's `requirements.txt` under `src/lib/` (`mdmreadpy`: `pywin32`,
-Windows-only; `mdmreportpy`: `csscompressor`/`rjsmin`; `mdmexcelreportpy`:
-`pandas`/`xlsxwriter`); they are collected into `dist/optional_dependencies/` and
-installed best-effort by `run_init`.
+`xlsxwriter>=1.0`, `openpyxl>=3.0`. The launcher imports the program modules lazily, so
+`--program done` works before any third-party package is installed. Optional and
+platform-specific dependencies live in each submodule's `requirements.txt` under
+`src/lib/` (`mdmreadpy`: `pywin32`, Windows-only; `mdmreportpy`: `csscompressor`/`rjsmin`;
+`mdmexcelreportpy`: `pandas`/`xlsxwriter`). `run_init.bat`/`run_init.sh` are the single
+source of truth for the venv setup; their marked
+`=== BEGIN/END GENERATED DEPENDENCIES ===` section is regenerated at build time by
+`src_dev_build/inline_run_init.py` into explicit `pip install` rows that are inlined
+best-effort into each distributed launcher.
 
 ## Roadmap
 

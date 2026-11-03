@@ -38,16 +38,18 @@ The generated `.mrs` file is **mrScriptBasic** (IBM/Unicom Data Model scripting)
 > directly.
 
 Optional and platform-specific dependencies (`pywin32`, `csscompressor`/`rjsmin`, …) are
-declared in each submodule's own `requirements.txt` under `src/lib/`; `build.bat`/`build.sh`
-copy them into `dist/optional_dependencies/` and `run_init.bat`/`run_init.sh` install them
-best-effort (a missing optional package only disables the corresponding part).
+declared in each submodule's own `requirements.txt` under `src/lib/`. At build time
+`build.bat`/`build.sh` turn them (plus the root `requirements.txt`) into explicit
+`pip install` rows inlined into each distributed launcher, installed best-effort (a
+missing optional package only disables the corresponding part).
 
 ## Usage
 
 Download the latest release:
 [Releases](../../releases/latest)
 
-The release ships two batch files. Edit the paths at the top of each, then run them.
+The release ships a Python bundle plus two self-contained batch files. Edit the paths at
+the top of each batch file, then run it.
 
 ### 1. Generate the Excel map — `run_overlayhelper_excel.bat`
 
@@ -105,12 +107,12 @@ To rebuild the bundle:
 build.bat
 ```
 
-or, on macOS/Linux, `build.sh`. The build first builds the `mdmreadpy` submodule
-(regenerating its generated files), bundles `src/` with pinliner into
-`dist/mdmoverlayhelper_bundle.py`, copies the batch files and
-`LICENSE`/`README.md`/`requirements.txt` into `dist/`, collects each submodule's
-`requirements.txt` into `dist/optional_dependencies/`, copies `run_init.bat`/`run_init.sh`
-into `dist/`, and verifies the bundle loads with `--program done`.
+or, on macOS/Linux, `build.sh`. The build first updates the program version and builds
+the `mdmreadpy` submodule (regenerating its generated files), bundles `src/` with pinliner
+into `dist/mdmoverlayhelper_bundle.py`, copies the batch files and `LICENSE`/`README.md`
+into `dist/`, inlines the venv setup plus explicit `pip install` rows into each distributed
+launcher (so each BAT is self-contained — no `requirements.txt`/`run_init.*` ships in
+`dist/`), and verifies the bundle loads with `--program done`.
 
 ## Three ways to launch
 
@@ -118,8 +120,9 @@ There is one universal dispatcher (`src/launcher.py`, `--program <name>`) but th
 be started three equivalent ways:
 
 1. **Single-file bundle** (what end users get). `build.bat`/`build.sh` produce
-   `dist/mdmoverlayhelper_bundle.py` and append `from src import launcher; launcher.main()`.
-   Prepare the environment with `run_init`, then run the bundle with the venv Python:
+   `dist/mdmoverlayhelper_bundle.py` plus self-contained `.bat` launchers (the venv setup
+   and `pip install` steps are already inlined into them). For development you can also
+   set up the environment with `run_init` and drive the bundle directly:
 
    ```
    run_init.sh

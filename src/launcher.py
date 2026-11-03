@@ -2,33 +2,47 @@
 import argparse
 # from pathlib import Path
 import traceback, sys
+import importlib
 
 
 
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    from lib.mdmreadpy.src import read_mdd
-    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy.src import report_create as report_excel_create
-    import program_generate_overlays_script
-    import program_prep_mddread_scheme
-elif '.' in __name__:
-    # package
-    from .lib.mdmreadpy.src import read_mdd
-    from .lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from .lib.mdmexcelreportpy.src import report_create as report_excel_create
-    from . import program_generate_overlays_script
-    from . import program_prep_mddread_scheme
-else:
-    # included with no parent package
-    from lib.mdmreadpy.src import read_mdd
-    from lib.mdmreadpy.src.lib.mdmreportpy.src import report_create as report_html_create
-    from lib.mdmexcelreportpy.src import report_create as report_excel_create
-    import program_generate_overlays_script
-    import program_prep_mddread_scheme
+# Entry-point modules (``read_mdd``, ``report_html``, ``report_excel``,
+# ``generate_overlays_script``, ``prep_mddread_scheme`` and the generated version
+# string) are imported lazily inside their ``call_*`` handlers via
+# :func:`_import_module`. This keeps the launcher loadable without any third-party
+# dependencies or build artifacts (no ``GENERATED/`` directory), so ``--program done``
+# works as a smoke test in a fresh checkout.
+
+def _import_module(flat_name):
+    # Lazily import an entry-point module so the launcher can load without any
+    # optional third-party dependencies (pandas, xlsxwriter, openpyxl, pywin32,
+    # csscompressor, rjsmin, ...). `flat_name` is the module's dotted path below
+    # the launcher package, e.g. 'lib.mdmreadpy.src.read_mdd' or
+    # 'program_generate_overlays_script'. Mirrors the three-way conditional import
+    # used by entry-point scripts.
+    if __name__ == '__main__':
+        # run as a program
+        return importlib.import_module(flat_name)
+    elif '.' in __name__:
+        # package
+        return importlib.import_module('.' + flat_name, package=__package__)
+    else:
+        # included with no parent package
+        return importlib.import_module(flat_name)
+
+
+def _import_version():
+    # The generated version string only exists after a build step has written
+    # ``GENERATED/_VERSION.py``. Fall back to a placeholder so ``--program version``
+    # still works (and ``--program done`` never needs it) in a fresh checkout.
+    try:
+        version_module = _import_module('GENERATED._VERSION')
+    except ImportError:
+        return 'unknown'
+    return version_module._VERSION
 
 
 
@@ -42,28 +56,35 @@ STDOUT_COLOR_GREEN = "\033[32m"
 
 
 def call_read_mdd_program(*argcs,**kwargs):
+    read_mdd = _import_module('lib.mdmreadpy.src.read_mdd')
     return read_mdd.entry_point(*argcs,**kwargs)
 
 def call_report_program(*argcs,**kwargs):
     raise Exception('deprecated: --program report is deprecated here; please use --program report_html or --program report_excel instead')
 
 def call_report_html_program(*argcs,**kwargs):
+    report_html_create = _import_module('lib.mdmreadpy.src.lib.mdmreportpy.src.report_create')
     return report_html_create.entry_point(*argcs,**kwargs)
 
 def call_report_excel_program(*argcs,**kwargs):
+    report_excel_create = _import_module('lib.mdmexcelreportpy.src.report_create')
     return report_excel_create.entry_point(*argcs,**kwargs)
 
 def call_generate_overlays_script(*argcs,**kwargs):
+    program_generate_overlays_script = _import_module('program_generate_overlays_script')
     return program_generate_overlays_script.entry_point(*argcs,**kwargs)
 
 def call_prepmddscheme_program(*argcs,**kwargs):
+    program_prep_mddread_scheme = _import_module('program_prep_mddread_scheme')
     return program_prep_mddread_scheme.entry_point(*argcs,**kwargs)
 
 def call_done_program(*argcs,**kwargs):
-    # no-op program used by build.bat to verify the bundle's imports resolve correctly
-    msg = f'''
-{STDOUT_COLOR_GREEN}done{STDOUT_COLOR_RESET}
-    '''
+    # no-op program used by build scripts to verify the bundle loads correctly
+    print(f'{STDOUT_COLOR_GREEN}done{STDOUT_COLOR_RESET}')
+    return True
+
+def call_printversion_program(*argcs,**kwargs):
+    msg = _import_version().strip()
     print(msg)
     return True
 
@@ -77,6 +98,7 @@ run_programs = {
     'generate_overlays_script': call_generate_overlays_script,
     'prep_mddread_scheme': call_prepmddscheme_program,
     'done': call_done_program,
+    'version': call_printversion_program,
 }
 
 

@@ -4,16 +4,17 @@
 # Versions are intentionally kept wide (a minimal floor only) so this code works across
 # a wide range of environments.
 #
-# These packages are required to import and run the distributed
-# mdmoverlayhelper_bundle.py: the launcher imports the MDD reader (mdmreadpy), the
-# HTML/Excel reporters (mdmreportpy / mdmexcelreportpy) and this project's own programs
-# up front.
+# These packages are required to run the translation-overlay workflow itself
+# (prep_mddread_scheme, report_excel, generate_overlays_script): the Excel steps use
+# pandas + xlsxwriter + openpyxl. The launcher imports those programs lazily, so
+# `--program done` still works before these are installed.
 #
 # Optional and platform-specific dependencies are NOT listed here. Each submodule
 # declares its own requirements (mdmreadpy: pywin32, Windows-only; mdmreportpy:
-# csscompressor/rjsmin; mdmexcelreportpy: pandas/xlsxwriter). build.bat/build.sh collect
-# those into dist/optional_dependencies/ and run_init.bat/run_init.sh install them
-# best-effort — a missing optional dependency only disables the corresponding part.
+# csscompressor/rjsmin; mdmexcelreportpy: pandas/xlsxwriter). At build time
+# build.bat/build.sh parse those into explicit `pip install` rows and inline them
+# (best-effort) into each distributed launcher — a missing optional dependency only
+# disables the corresponding part.
 
 pandas>=1.2
 xlsxwriter>=1.0

@@ -10,6 +10,18 @@ DEL /F /Q dist\*
 
 ECHO -
 ECHO -
+ECHO Update program version
+IF NOT EXIST src\GENERATED MKDIR src\GENERATED
+ECHO '''For auto-generated files''' > src\GENERATED\__init__.py
+ECHO # THIS IS AUTO-GENERATED > src\GENERATED\_VERSION.py
+python -c "from datetime import datetime; print(f'# {datetime.now()}')" >> src\GENERATED\_VERSION.py
+ECHO _VERSION = ''' >> src\GENERATED\_VERSION.py
+git describe --tags --dirty >> src\GENERATED\_VERSION.py
+ECHO ''' >> src\GENERATED\_VERSION.py
+ECHO Done
+
+ECHO -
+ECHO -
 ECHO Build submodule src\lib\mdmreadpy (generates its GENERATED files)...
 PUSHD src\lib\mdmreadpy
 CALL build.bat
@@ -43,47 +55,21 @@ POPD
 
 ECHO -
 ECHO -
-ECHO Bring LICENSE, README.md and requirements.txt to dist...
+ECHO Bring LICENSE and README.md to dist...
 COPY /Y LICENSE dist\LICENSE
 COPY /Y README.md dist\README.md
-COPY /Y requirements.txt dist\requirements.txt
 ECHO Done
 
 ECHO -
 ECHO -
-ECHO Collect optional per-submodule requirements into dist\optional_dependencies...
-powershell -NoProfile -Command ^
-"$srcRoot = (Resolve-Path 'src').Path; ^
-$destRoot = 'dist\optional_dependencies'; ^
-Get-ChildItem -Path (Join-Path $srcRoot 'lib') -Recurse -Filter 'requirements.txt' -File | Where-Object { ^
-    $_.FullName -notmatch '\\dist\\' -and $_.FullName -notmatch '\\.git\\' -and $_.FullName -notmatch '\\GENERATED\\' ^
-} | ForEach-Object { ^
-    $rel = $_.FullName.Substring($srcRoot.Length + 1); ^
-    $dest = Join-Path $destRoot $rel; ^
-    $destDir = Split-Path -Parent $dest; ^
-    if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }; ^
-    Copy-Item $_.FullName $dest -Force; ^
-    Write-Host ('copying optional requirements: ' + $rel) ^
-}; "
+ECHO Inline run_init - venv setup + explicit pip installs - into dist launchers...
+python src_dev_build\inline_run_init.py
+if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
 
 ECHO -
 ECHO -
-ECHO Copy and adapt run_init scripts to dist...
-powershell -NoProfile -Command ^
-"$c = Get-Content 'run_init.bat' -Encoding 'Default'; ^
-$c = $c -replace 'src\\lib', 'optional_dependencies'; ^
-$c = $c -replace '-m src\.launcher', 'mdmoverlayhelper_bundle.py'; ^
-Set-Content 'dist\run_init.bat' $c -Encoding 'Default'; ^
-$c = Get-Content 'run_init.sh' -Encoding 'Default'; ^
-$c = $c -replace 'src/lib', 'optional_dependencies'; ^
-$c = $c -replace '-m src\.launcher', 'mdmoverlayhelper_bundle.py'; ^
-Set-Content 'dist\run_init.sh' $c -Encoding 'Default'; "
-ECHO Done
-
-ECHO -
-ECHO -
-ECHO Verifying the bundle imports correctly...
+ECHO Verify the bundle: run --program done...
 python dist\mdmoverlayhelper_bundle.py --program done
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
