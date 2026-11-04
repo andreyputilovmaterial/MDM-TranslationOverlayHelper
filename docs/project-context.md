@@ -41,7 +41,8 @@ string from `GENERATED/_VERSION.py`).
 `build.bat` (Windows) / `build.sh` (macOS/Linux) first update the program version
 (`src/GENERATED/_VERSION.py` from `git describe --tags --dirty`), then build the
 `mdmreadpy` submodule (regenerating its `GENERATED` files — `_VERSION.py` and the nested
-`mdmreportpy` HTML template), then run pinliner over `src/` to produce
+`mdmreportpy` HTML template), then run pinliner over `src/` (with
+`--main src.launcher --main-attr main`) to produce
 `dist/mdmoverlayhelper_bundle.py`, copy the run `.bat` files plus `LICENSE`/`README.md`
 into `dist/`, and run `src_dev_build/inline_run_init.py` to inline the venv setup plus
 explicit `pip install` rows into each distributed launcher. `dist/` therefore ships a
@@ -78,6 +79,12 @@ source of truth for the venv setup; their marked
 `=== BEGIN/END GENERATED DEPENDENCIES ===` section is regenerated at build time by
 `src_dev_build/inline_run_init.py` into explicit `pip install` rows that are inlined
 best-effort into each distributed launcher.
+
+## Conventions
+
+Cross-project structural conventions (entry-point import style, bundling and call
+conventions) live in `docs/maintenance-log.md`; repo-specific notes stay here and in the
+commit history.
 
 ## Roadmap
 
