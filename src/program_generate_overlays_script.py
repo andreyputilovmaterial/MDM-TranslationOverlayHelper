@@ -7,19 +7,14 @@ from pathlib import Path
 import pandas as pd
 
 
-if __name__ == '__main__':
-    # run as a program
-    # import plugins
-    from read_excel import Map
-    from generate_scripts import produce_scripts
-elif '.' in __name__:
-    # package
-    # from . import plugins
+# Entry-point module: select imports on `__package__` (set reliably by the import
+# system) — relative inside the `src` package / bundle, flat with no parent package.
+if __package__:
     from .read_excel import Map
     from .generate_scripts import produce_scripts
 else:
-    # included with no parent package
-    # import plugins
+    # flat context: inlined with no parent package. Plain
+    # `python src/program_generate_overlays_script.py` is NOT supported (use -m).
     from read_excel import Map
     from generate_scripts import produce_scripts
 

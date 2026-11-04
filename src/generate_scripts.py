@@ -5,15 +5,7 @@ import re
 
 
 
-if __name__ == '__main__':
-    # run as a program
-    import prepare_scripts_TEMPLATE as TEMPLATE
-elif '.' in __name__:
-    # package
-    from . import generate_scripts_template as TEMPLATE
-else:
-    # included with no parent package
-    import prepare_scripts_TEMPLATE as TEMPLATE
+from . import generate_scripts_template as TEMPLATE
 
 
 

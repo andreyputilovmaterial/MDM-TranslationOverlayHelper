@@ -8,23 +8,6 @@ from pathlib import Path
 import json
 
 
-
-if __name__ == '__main__':
-    # run as a program
-    # import format_sheet_xlsxwriter as excel_xlsxwriter_format_sheet
-    pass
-elif '.' in __name__:
-    # package
-    # from . import format_sheet_xlsxwriter as excel_xlsxwriter_format_sheet
-    pass
-else:
-    # included with no parent package
-    # import format_sheet_xlsxwriter as excel_xlsxwriter_format_sheet
-    pass
-
-
-
-
 # STDOUT_COLOR_RED = "\033[91m"
 STDOUT_COLOR_RED = "\033[31m"
 STDOUT_COLOR_RESET = "\033[0m"

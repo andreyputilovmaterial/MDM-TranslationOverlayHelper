@@ -129,18 +129,20 @@ be started three equivalent ways:
    ./.venv/bin/python dist/mdmoverlayhelper_bundle.py --program read_mdd --mdd "Data\file.mdd"
    ```
 
-2. **Direct module** (development). Run a program's entry-point module directly:
+2. **Direct module** (development). Run a program's entry-point module directly with `-m`:
 
    ```
-   python src/program_prep_mddread_scheme.py --inpfile file.json --outfile file.json
-   python src/program_generate_overlays_script.py --inpfile file.xlsx --outfile run.mrs
+   python -m src.program_prep_mddread_scheme --inpfile file.json --outfile file.json
+   python -m src.program_generate_overlays_script --inpfile file.xlsx --outfile run.mrs
    ```
 
-3. **Launcher proxy** (development). Run the dispatcher directly:
+3. **Launcher proxy** (development). Run the dispatcher directly with `-m`:
 
    ```
-   python src/launcher.py --program read_mdd --mdd "Data\file.mdd"
+   python -m src.launcher --program read_mdd --mdd "Data\file.mdd"
    ```
+
+Plain-script invocation (`python src/...py`, without `-m`) is not supported.
 
 ## Documentation
 

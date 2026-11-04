@@ -21,16 +21,17 @@ def _import_module(flat_name):
     # optional third-party dependencies (pandas, xlsxwriter, openpyxl, pywin32,
     # csscompressor, rjsmin, ...). `flat_name` is the module's dotted path below
     # the launcher package, e.g. 'lib.mdmreadpy.src.read_mdd' or
-    # 'program_generate_overlays_script'. Mirrors the three-way conditional import
-    # used by entry-point scripts.
-    if __name__ == '__main__':
-        # run as a program
-        return importlib.import_module(flat_name)
-    elif '.' in __name__:
-        # package
+    # 'program_generate_overlays_script'.
+    #
+    # The launcher is itself an entry-point module (invoked via `-m` or imported
+    # by the pinliner bundle), so imports are selected on `__package__` (set
+    # reliably by the import system) rather than `__name__`.
+    if __package__:
+        # package context: python -m src.launcher, or `from src import launcher`
+        # in the bundle -> relative import.
         return importlib.import_module('.' + flat_name, package=__package__)
     else:
-        # included with no parent package
+        # flat context: inlined with no parent package -> flat import.
         return importlib.import_module(flat_name)
 
 

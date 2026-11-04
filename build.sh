@@ -34,18 +34,8 @@ echo "Build submodule src/lib/mdmreadpy (generates its GENERATED files)..."
 ) || fail
 echo "Done"
 
-echo "Calling pinliner..."
-python src_dev_build/lib/pinliner/pinliner/pinliner.py src -o dist/mdmoverlayhelper_bundle.py || fail
-echo "Done"
-
-echo "Patching mdmoverlayhelper_bundle.py..."
-cat >> dist/mdmoverlayhelper_bundle.py <<'EOF'
-# ...
-# print('within mdmoverlayhelper_bundle')
-from src import launcher
-launcher.main()
-# print('out of mdmoverlayhelper_bundle')
-EOF
+echo "Calling pinliner (with --main entry point)..."
+python src_dev_build/lib/pinliner/pinliner/pinliner.py src -o dist/mdmoverlayhelper_bundle.py --main src.launcher --main-attr main || fail
 echo "Done"
 
 echo "-"

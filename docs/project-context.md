@@ -52,10 +52,12 @@ with `--program done`.
 ## Launching (three ways)
 
 Each program can be launched three equivalent ways (same schema as the other projects):
-1. **Single-file bundle** — `dist/mdmoverlayhelper_bundle.py --program <name>`.
-2. **Direct module** — `python src/program_generate_overlays_script.py ...` /
-   `python src/program_prep_mddread_scheme.py ...`.
-3. **Launcher proxy** — `python src/launcher.py --program <name>`.
+1. **Single-file bundle** — `python dist/mdmoverlayhelper_bundle.py --program <name>`.
+2. **Direct module** — `python -m src.program_generate_overlays_script ...` /
+   `python -m src.program_prep_mddread_scheme ...`.
+3. **Launcher proxy** — `python -m src.launcher --program <name>`.
+
+Plain-script invocation (without `-m`) is not supported.
 
 ## Generated `.mrs` scripts
 

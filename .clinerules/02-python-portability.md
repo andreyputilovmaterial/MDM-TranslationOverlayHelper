@@ -10,30 +10,32 @@ It must be usable as an imported module *or* included as a git submodule, bundle
    if needed, must be embedded into a generated Python module at build time (see below),
 5. Minimal dependencies.
 
-## Entry-point scripts and conditional imports
+## Entry-point modules and conditional imports
 
 This project can be used in different ways: distributed as a single-file bundle created
-with `pinliner`, or called directly during development. To support both, a few scripts
-are also launched as a program in development and therefore use a three-way conditional
-import block instead of a single import style:
+with `pinliner`, or called directly during development. To support both, entry-point
+modules (the launcher and the `--program` targets) select their imports on `__package__`
+(a two-branch split) instead of a single import style:
 
 ```python
-if __name__ == '__main__':
-    # run as a program, e.g. `python src/entry_point.py`
-    from sibling_module import some_function
-elif '.' in __name__:
-    # imported as a package member
+if __package__:
+    # package context: python -m src.entry_point, or `from src import entry_point`
+    # in the bundle -> relative imports.
     from .sibling_module import some_function
 else:
-    # included in the pinliner bundle with no parent package
+    # flat context: inlined with no parent package -> flat imports.
     from sibling_module import some_function
 ```
 
 The module and function names above are illustrative — replace them with the real
-sibling module of your entry point. In this repo the scripts that follow this pattern
-are `src/launcher.py` and `src/read_mdd.py`. Any script that is meant to be launched
-directly should use this pattern; every other module (the ones that are only ever
-imported) uses plain relative imports.
+sibling module of your entry point. In this repo the modules that follow this pattern
+are `src/launcher.py`, `src/program_generate_overlays_script.py` and
+`src/program_prep_mddread_scheme.py`. Plain-script invocation
+(`python src/entry_point.py`, without `-m`) is **not** supported: use
+`python -m src.entry_point` instead.
+
+Every other module (the ones that are only ever imported) uses plain relative imports
+only.
 
 ## Static assets and the `GENERATED` folder
 
@@ -55,7 +57,7 @@ Existing example in this repo:
 
 - `build.bat` runs `git describe --tags --dirty` (a non-Python "static asset") and
   writes the result into `src/GENERATED/_VERSION.py` as the `_VERSION` variable, which
-  `src/launcher.py` and `src/read_mdd.py` import.
+  `src/launcher.py` imports.
 
 ### Embedding larger static assets (illustrative)
 

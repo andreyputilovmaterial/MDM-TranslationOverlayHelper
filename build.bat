@@ -29,21 +29,10 @@ if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 POPD
 ECHO Done
 
-ECHO Calling pinliner...
-REM REM :: comment: please delete .pyc files before every call of the mdmoverlayhelper_bundle - this is implemented in my fork of the pinliner
-@REM python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py --verbose
-python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py
+ECHO Calling pinliner (with --main entry point)...
+python src_dev_build\lib\pinliner\pinliner\pinliner.py src -o dist/mdmoverlayhelper_bundle.py --main src.launcher --main-attr main
 if %ERRORLEVEL% NEQ 0 ( echo ERROR: Failure && pause && exit /b %errorlevel% )
 ECHO Done
-
-ECHO Patching mdmoverlayhelper_bundle.py...
-ECHO # ... >> dist/mdmoverlayhelper_bundle.py
-ECHO # print('within mdmoverlayhelper_bundle') >> dist/mdmoverlayhelper_bundle.py
-REM REM :: no need for this, the root package is loaded automatically
-@REM ECHO # import mdmoverlayhelper_bundle >> dist/mdmoverlayhelper_bundle.py
-ECHO from src import launcher >> dist/mdmoverlayhelper_bundle.py
-ECHO launcher.main() >> dist/mdmoverlayhelper_bundle.py
-ECHO # print('out of mdmoverlayhelper_bundle') >> dist/mdmoverlayhelper_bundle.py
 
 PUSHD dist
 COPY ..\run_make_excel.bat .\run_overlayhelper_excel.bat
